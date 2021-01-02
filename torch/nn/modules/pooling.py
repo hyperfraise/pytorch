@@ -718,18 +718,18 @@ class AvgPool2d(_AvgPoolNd):
         )
 
 
-class AvgPool2d(_AvgPoolNd):
-    r"""Applies a 2D average pooling over an input signal composed of several input
+class AvgPool3d(_AvgPoolNd):
+    r"""Applies a 3D average pooling over an input signal composed of several input
     planes.
 
-    In the simplest case, the output value of the layer with input size :math:`(N, C, H, W)`,
-    output :math:`(N, C, H_{out}, W_{out})` and :attr:`kernel_size` :math:`(kH, kW)`
+    In the simplest case, the output value of the layer with input size :math:`(N, C, D, H, W)`,
+    output :math:`(N, C, D_{out}, H_{out}, W_{out})` and :attr:`kernel_size` :math:`(kD, kH, kW)`
     can be precisely described as:
 
     .. math::
 
-        out(N_i, C_j, h, w)  = \frac{1}{kH * kW} \sum_{m=0}^{kH-1} \sum_{n=0}^{kW-1}
-                               input(N_i, C_j, stride[0] \times h + m, stride[1] \times w + n)
+        out(N_i, C_j, d, h, w)  = \frac{1}{kD * kH * kW} \sum_{m=0}^{kH-1} \sum_{n=0}^{kW-1} \sum_{m=0}^{kD-1}
+                               input(N_i, C_j, stride[0] \times d + m, stride[1] \times h + n, stride[2] \times w + n)
 
     If :attr:`padding` is non-zero, then the input is implicitly zero-padded on both sides
     for :attr:`padding` number of points.
@@ -753,24 +753,28 @@ class AvgPool2d(_AvgPoolNd):
         divisor_override: if specified, it will be used as divisor, otherwise :attr:`kernel_size` will be used
 
     Shape:
-        - Input: :math:`(N, C, H_{in}, W_{in})`
-        - Output: :math:`(N, C, H_{out}, W_{out})`, where
+        - Input: :math:`(N, C, D_{in}, H_{in}, W_{in})`
+        - Output: :math:`(N, C, D_{out}, H_{out}, W_{out})`, where
 
           .. math::
-              H_{out} = \left\lfloor\frac{H_{in}  + 2 \times \text{padding}[0] -
+              D_{out} = \left\lfloor\frac{D_{in}  + 2 \times \text{padding}[0] -
                 \text{kernel\_size}[0]}{\text{stride}[0]} + 1\right\rfloor
 
           .. math::
-              W_{out} = \left\lfloor\frac{W_{in}  + 2 \times \text{padding}[1] -
+              H_{out} = \left\lfloor\frac{H_{in}  + 2 \times \text{padding}[1] -
                 \text{kernel\_size}[1]}{\text{stride}[1]} + 1\right\rfloor
+
+          .. math::
+              W_{out} = \left\lfloor\frac{W_{in}  + 2 \times \text{padding}[2] -
+                \text{kernel\_size}[2]}{\text{stride}[2]} + 1\right\rfloor
 
     Examples::
 
-        >>> # pool of square window of size=3, stride=2
-        >>> m = nn.AvgPool2d(3, stride=2)
-        >>> # pool of non-square window
-        >>> m = nn.AvgPool2d((3, 2), stride=(2, 1))
-        >>> input = torch.randn(20, 16, 50, 32)
+        >>> # pool of cubic window of size=3, stride=2
+        >>> m = nn.AvgPool3d(3, stride=2)
+        >>> # pool of non-cubic window
+        >>> m = nn.AvgPool3d((3, 2, 2), stride=(2, 1, 1))
+        >>> input = torch.randn(20, 16,  50, 50, 32)
         >>> output = m(input)
     """
     __constants__ = [
@@ -782,22 +786,22 @@ class AvgPool2d(_AvgPoolNd):
         "divisor_override",
     ]
 
-    kernel_size: _size_2_t
-    stride: _size_2_t
-    padding: _size_2_t
+    kernel_size: _size_3_t
+    stride: _size_3_t
+    padding: _size_3_t
     ceil_mode: bool
     count_include_pad: bool
 
     def __init__(
         self,
-        kernel_size: _size_2_t,
-        stride: Optional[_size_2_t] = None,
-        padding: _size_2_t = 0,
+        kernel_size: _size_3_t,
+        stride: Optional[_size_3_t] = None,
+        padding: _size_3_t = 0,
         ceil_mode: bool = False,
         count_include_pad: bool = True,
         divisor_override: Optional[int] = None,
     ) -> None:
-        super(AvgPool2d, self).__init__()
+        super(AvgPool3d, self).__init__()
         self.kernel_size = kernel_size
         self.stride = stride if (stride is not None) else kernel_size
         self.padding = padding
@@ -806,7 +810,7 @@ class AvgPool2d(_AvgPoolNd):
         self.divisor_override = divisor_override
 
     def forward(self, input: Tensor) -> Tensor:
-        return F.avg_pool2d(
+        return F.avg_pool3d(
             input,
             self.kernel_size,
             self.stride,
