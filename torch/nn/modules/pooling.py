@@ -5,19 +5,40 @@ from .module import Module
 from .utils import _single, _pair, _triple
 from .. import functional as F
 
-from ..common_types import (_size_any_t, _size_1_t, _size_2_t, _size_3_t,
-                            _ratio_3_t, _ratio_2_t, _size_any_opt_t, _size_2_opt_t, _size_3_opt_t)
+from ..common_types import (
+    _size_any_t,
+    _size_1_t,
+    _size_2_t,
+    _size_3_t,
+    _ratio_3_t,
+    _ratio_2_t,
+    _size_any_opt_t,
+    _size_2_opt_t,
+    _size_3_opt_t,
+)
 
 
 class _MaxPoolNd(Module):
-    __constants__ = ['kernel_size', 'stride', 'padding', 'dilation',
-                     'return_indices', 'ceil_mode']
+    __constants__ = [
+        "kernel_size",
+        "stride",
+        "padding",
+        "dilation",
+        "return_indices",
+        "ceil_mode",
+    ]
     return_indices: bool
     ceil_mode: bool
 
-    def __init__(self, kernel_size: _size_any_t, stride: Optional[_size_any_t] = None,
-                 padding: _size_any_t = 0, dilation: _size_any_t = 1,
-                 return_indices: bool = False, ceil_mode: bool = False) -> None:
+    def __init__(
+        self,
+        kernel_size: _size_any_t,
+        stride: Optional[_size_any_t] = None,
+        padding: _size_any_t = 0,
+        dilation: _size_any_t = 1,
+        return_indices: bool = False,
+        ceil_mode: bool = False,
+    ) -> None:
         super(_MaxPoolNd, self).__init__()
         self.kernel_size = kernel_size
         self.stride = stride if (stride is not None) else kernel_size
@@ -27,8 +48,10 @@ class _MaxPoolNd(Module):
         self.ceil_mode = ceil_mode
 
     def extra_repr(self) -> str:
-        return 'kernel_size={kernel_size}, stride={stride}, padding={padding}' \
-            ', dilation={dilation}, ceil_mode={ceil_mode}'.format(**self.__dict__)
+        return (
+            "kernel_size={kernel_size}, stride={stride}, padding={padding}"
+            ", dilation={dilation}, ceil_mode={ceil_mode}".format(**self.__dict__)
+        )
 
 
 class MaxPool1d(_MaxPoolNd):
@@ -85,9 +108,15 @@ class MaxPool1d(_MaxPoolNd):
     dilation: _size_1_t
 
     def forward(self, input: Tensor) -> Tensor:
-        return F.max_pool1d(input, self.kernel_size, self.stride,
-                            self.padding, self.dilation, self.ceil_mode,
-                            self.return_indices)
+        return F.max_pool1d(
+            input,
+            self.kernel_size,
+            self.stride,
+            self.padding,
+            self.dilation,
+            self.ceil_mode,
+            self.return_indices,
+        )
 
 
 class MaxPool2d(_MaxPoolNd):
@@ -159,9 +188,15 @@ class MaxPool2d(_MaxPoolNd):
     dilation: _size_2_t
 
     def forward(self, input: Tensor) -> Tensor:
-        return F.max_pool2d(input, self.kernel_size, self.stride,
-                            self.padding, self.dilation, self.ceil_mode,
-                            self.return_indices)
+        return F.max_pool2d(
+            input,
+            self.kernel_size,
+            self.stride,
+            self.padding,
+            self.dilation,
+            self.ceil_mode,
+            self.return_indices,
+        )
 
 
 class MaxPool3d(_MaxPoolNd):
@@ -237,15 +272,20 @@ class MaxPool3d(_MaxPoolNd):
     dilation: _size_3_t
 
     def forward(self, input: Tensor) -> Tensor:
-        return F.max_pool3d(input, self.kernel_size, self.stride,
-                            self.padding, self.dilation, self.ceil_mode,
-                            self.return_indices)
+        return F.max_pool3d(
+            input,
+            self.kernel_size,
+            self.stride,
+            self.padding,
+            self.dilation,
+            self.ceil_mode,
+            self.return_indices,
+        )
 
 
 class _MaxUnpoolNd(Module):
-
     def extra_repr(self) -> str:
-        return 'kernel_size={}, stride={}, padding={}'.format(
+        return "kernel_size={}, stride={}, padding={}".format(
             self.kernel_size, self.stride, self.padding
         )
 
@@ -308,15 +348,23 @@ class MaxUnpool1d(_MaxUnpoolNd):
     stride: _size_1_t
     padding: _size_1_t
 
-    def __init__(self, kernel_size: _size_1_t, stride: Optional[_size_1_t] = None, padding: _size_1_t = 0) -> None:
+    def __init__(
+        self,
+        kernel_size: _size_1_t,
+        stride: Optional[_size_1_t] = None,
+        padding: _size_1_t = 0,
+    ) -> None:
         super(MaxUnpool1d, self).__init__()
         self.kernel_size = _single(kernel_size)
         self.stride = _single(stride if (stride is not None) else kernel_size)
         self.padding = _single(padding)
 
-    def forward(self, input: Tensor, indices: Tensor, output_size: Optional[List[int]] = None) -> Tensor:
-        return F.max_unpool1d(input, indices, self.kernel_size, self.stride,
-                              self.padding, output_size)
+    def forward(
+        self, input: Tensor, indices: Tensor, output_size: Optional[List[int]] = None
+    ) -> Tensor:
+        return F.max_unpool1d(
+            input, indices, self.kernel_size, self.stride, self.padding, output_size
+        )
 
 
 class MaxUnpool2d(_MaxUnpoolNd):
@@ -385,15 +433,23 @@ class MaxUnpool2d(_MaxUnpoolNd):
     stride: _size_2_t
     padding: _size_2_t
 
-    def __init__(self, kernel_size: _size_2_t, stride: Optional[_size_2_t] = None, padding: _size_2_t = 0) -> None:
+    def __init__(
+        self,
+        kernel_size: _size_2_t,
+        stride: Optional[_size_2_t] = None,
+        padding: _size_2_t = 0,
+    ) -> None:
         super(MaxUnpool2d, self).__init__()
         self.kernel_size = _pair(kernel_size)
         self.stride = _pair(stride if (stride is not None) else kernel_size)
         self.padding = _pair(padding)
 
-    def forward(self, input: Tensor, indices: Tensor, output_size: Optional[List[int]] = None) -> Tensor:
-        return F.max_unpool2d(input, indices, self.kernel_size, self.stride,
-                              self.padding, output_size)
+    def forward(
+        self, input: Tensor, indices: Tensor, output_size: Optional[List[int]] = None
+    ) -> Tensor:
+        return F.max_unpool2d(
+            input, indices, self.kernel_size, self.stride, self.padding, output_size
+        )
 
 
 class MaxUnpool3d(_MaxUnpoolNd):
@@ -451,22 +507,36 @@ class MaxUnpool3d(_MaxUnpoolNd):
     stride: _size_3_t
     padding: _size_3_t
 
-    def __init__(self, kernel_size: _size_3_t, stride: Optional[_size_3_t] = None, padding: _size_3_t = 0) -> None:
+    def __init__(
+        self,
+        kernel_size: _size_3_t,
+        stride: Optional[_size_3_t] = None,
+        padding: _size_3_t = 0,
+    ) -> None:
         super(MaxUnpool3d, self).__init__()
         self.kernel_size = _triple(kernel_size)
         self.stride = _triple(stride if (stride is not None) else kernel_size)
         self.padding = _triple(padding)
 
-    def forward(self, input: Tensor, indices: Tensor, output_size: Optional[List[int]] = None) -> Tensor:
-        return F.max_unpool3d(input, indices, self.kernel_size, self.stride,
-                              self.padding, output_size)
+    def forward(
+        self, input: Tensor, indices: Tensor, output_size: Optional[List[int]] = None
+    ) -> Tensor:
+        return F.max_unpool3d(
+            input, indices, self.kernel_size, self.stride, self.padding, output_size
+        )
 
 
 class _AvgPoolNd(Module):
-    __constants__ = ['kernel_size', 'stride', 'padding', 'ceil_mode', 'count_include_pad']
+    __constants__ = [
+        "kernel_size",
+        "stride",
+        "padding",
+        "ceil_mode",
+        "count_include_pad",
+    ]
 
     def extra_repr(self) -> str:
-        return 'kernel_size={}, stride={}, padding={}'.format(
+        return "kernel_size={}, stride={}, padding={}".format(
             self.kernel_size, self.stride, self.padding
         )
 
@@ -523,8 +593,14 @@ class AvgPool1d(_AvgPoolNd):
     ceil_mode: bool
     count_include_pad: bool
 
-    def __init__(self, kernel_size: _size_1_t, stride: _size_1_t = None, padding: _size_1_t = 0, ceil_mode: bool = False,
-                 count_include_pad: bool = True) -> None:
+    def __init__(
+        self,
+        kernel_size: _size_1_t,
+        stride: _size_1_t = None,
+        padding: _size_1_t = 0,
+        ceil_mode: bool = False,
+        count_include_pad: bool = True,
+    ) -> None:
         super(AvgPool1d, self).__init__()
         self.kernel_size = _single(kernel_size)
         self.stride = _single(stride if stride is not None else kernel_size)
@@ -534,8 +610,13 @@ class AvgPool1d(_AvgPoolNd):
 
     def forward(self, input: Tensor) -> Tensor:
         return F.avg_pool1d(
-            input, self.kernel_size, self.stride, self.padding, self.ceil_mode,
-            self.count_include_pad)
+            input,
+            self.kernel_size,
+            self.stride,
+            self.padding,
+            self.ceil_mode,
+            self.count_include_pad,
+        )
 
 
 class AvgPool2d(_AvgPoolNd):
@@ -593,7 +674,14 @@ class AvgPool2d(_AvgPoolNd):
         >>> input = torch.randn(20, 16, 50, 32)
         >>> output = m(input)
     """
-    __constants__ = ['kernel_size', 'stride', 'padding', 'ceil_mode', 'count_include_pad', 'divisor_override']
+    __constants__ = [
+        "kernel_size",
+        "stride",
+        "padding",
+        "ceil_mode",
+        "count_include_pad",
+        "divisor_override",
+    ]
 
     kernel_size: _size_2_t
     stride: _size_2_t
@@ -601,8 +689,15 @@ class AvgPool2d(_AvgPoolNd):
     ceil_mode: bool
     count_include_pad: bool
 
-    def __init__(self, kernel_size: _size_2_t, stride: Optional[_size_2_t] = None, padding: _size_2_t = 0,
-                 ceil_mode: bool = False, count_include_pad: bool = True, divisor_override: Optional[int] = None) -> None:
+    def __init__(
+        self,
+        kernel_size: _size_2_t,
+        stride: Optional[_size_2_t] = None,
+        padding: _size_2_t = 0,
+        ceil_mode: bool = False,
+        count_include_pad: bool = True,
+        divisor_override: Optional[int] = None,
+    ) -> None:
         super(AvgPool2d, self).__init__()
         self.kernel_size = kernel_size
         self.stride = stride if (stride is not None) else kernel_size
@@ -612,83 +707,97 @@ class AvgPool2d(_AvgPoolNd):
         self.divisor_override = divisor_override
 
     def forward(self, input: Tensor) -> Tensor:
-        return F.avg_pool2d(input, self.kernel_size, self.stride,
-                            self.padding, self.ceil_mode, self.count_include_pad, self.divisor_override)
+        return F.avg_pool2d(
+            input,
+            self.kernel_size,
+            self.stride,
+            self.padding,
+            self.ceil_mode,
+            self.count_include_pad,
+            self.divisor_override,
+        )
 
 
-class AvgPool3d(_AvgPoolNd):
-    r"""Applies a 3D average pooling over an input signal composed of several input
+class AvgPool2d(_AvgPoolNd):
+    r"""Applies a 2D average pooling over an input signal composed of several input
     planes.
 
-    In the simplest case, the output value of the layer with input size :math:`(N, C, D, H, W)`,
-    output :math:`(N, C, D_{out}, H_{out}, W_{out})` and :attr:`kernel_size` :math:`(kD, kH, kW)`
+    In the simplest case, the output value of the layer with input size :math:`(N, C, H, W)`,
+    output :math:`(N, C, H_{out}, W_{out})` and :attr:`kernel_size` :math:`(kH, kW)`
     can be precisely described as:
 
     .. math::
-        \begin{aligned}
-            \text{out}(N_i, C_j, d, h, w) ={} & \sum_{k=0}^{kD-1} \sum_{m=0}^{kH-1} \sum_{n=0}^{kW-1} \\
-                                              & \frac{\text{input}(N_i, C_j, \text{stride}[0] \times d + k,
-                                                      \text{stride}[1] \times h + m, \text{stride}[2] \times w + n)}
-                                                     {kD \times kH \times kW}
-        \end{aligned}
 
-    If :attr:`padding` is non-zero, then the input is implicitly zero-padded on all three sides
+        out(N_i, C_j, h, w)  = \frac{1}{kH * kW} \sum_{m=0}^{kH-1} \sum_{n=0}^{kW-1}
+                               input(N_i, C_j, stride[0] \times h + m, stride[1] \times w + n)
+
+    If :attr:`padding` is non-zero, then the input is implicitly zero-padded on both sides
     for :attr:`padding` number of points.
 
     Note:
         When ceil_mode=True, sliding windows are allowed to go off-bounds if they start within the left padding
         or the input. Sliding windows that would start in the right padded region are ignored.
 
-    The parameters :attr:`kernel_size`, :attr:`stride` can either be:
+    The parameters :attr:`kernel_size`, :attr:`stride`, :attr:`padding` can either be:
 
-        - a single ``int`` -- in which case the same value is used for the depth, height and width dimension
-        - a ``tuple`` of three ints -- in which case, the first `int` is used for the depth dimension,
-          the second `int` for the height dimension and the third `int` for the width dimension
+        - a single ``int`` -- in which case the same value is used for the height and width dimension
+        - a ``tuple`` of two ints -- in which case, the first `int` is used for the height dimension,
+          and the second `int` for the width dimension
 
     Args:
         kernel_size: the size of the window
         stride: the stride of the window. Default value is :attr:`kernel_size`
-        padding: implicit zero padding to be added on all three sides
+        padding: implicit zero padding to be added on both sides
         ceil_mode: when True, will use `ceil` instead of `floor` to compute the output shape
         count_include_pad: when True, will include the zero-padding in the averaging calculation
         divisor_override: if specified, it will be used as divisor, otherwise :attr:`kernel_size` will be used
 
     Shape:
-        - Input: :math:`(N, C, D_{in}, H_{in}, W_{in})`
-        - Output: :math:`(N, C, D_{out}, H_{out}, W_{out})`, where
+        - Input: :math:`(N, C, H_{in}, W_{in})`
+        - Output: :math:`(N, C, H_{out}, W_{out})`, where
 
           .. math::
-              D_{out} = \left\lfloor\frac{D_{in} + 2 \times \text{padding}[0] -
-                    \text{kernel\_size}[0]}{\text{stride}[0]} + 1\right\rfloor
+              H_{out} = \left\lfloor\frac{H_{in}  + 2 \times \text{padding}[0] -
+                \text{kernel\_size}[0]}{\text{stride}[0]} + 1\right\rfloor
 
           .. math::
-              H_{out} = \left\lfloor\frac{H_{in} + 2 \times \text{padding}[1] -
-                    \text{kernel\_size}[1]}{\text{stride}[1]} + 1\right\rfloor
-
-          .. math::
-              W_{out} = \left\lfloor\frac{W_{in} + 2 \times \text{padding}[2] -
-                    \text{kernel\_size}[2]}{\text{stride}[2]} + 1\right\rfloor
+              W_{out} = \left\lfloor\frac{W_{in}  + 2 \times \text{padding}[1] -
+                \text{kernel\_size}[1]}{\text{stride}[1]} + 1\right\rfloor
 
     Examples::
 
         >>> # pool of square window of size=3, stride=2
-        >>> m = nn.AvgPool3d(3, stride=2)
+        >>> m = nn.AvgPool2d(3, stride=2)
         >>> # pool of non-square window
-        >>> m = nn.AvgPool3d((3, 2, 2), stride=(2, 1, 2))
-        >>> input = torch.randn(20, 16, 50,44, 31)
+        >>> m = nn.AvgPool2d((3, 2), stride=(2, 1))
+        >>> input = torch.randn(20, 16, 50, 32)
         >>> output = m(input)
     """
-    __constants__ = ['kernel_size', 'stride', 'padding', 'ceil_mode', 'count_include_pad', 'divisor_override']
+    __constants__ = [
+        "kernel_size",
+        "stride",
+        "padding",
+        "ceil_mode",
+        "count_include_pad",
+        "divisor_override",
+    ]
 
-    kernel_size: _size_3_t
-    stride: _size_3_t
-    padding: _size_3_t
+    kernel_size: _size_2_t
+    stride: _size_2_t
+    padding: _size_2_t
     ceil_mode: bool
     count_include_pad: bool
 
-    def __init__(self, kernel_size: _size_3_t, stride: Optional[_size_3_t] = None, padding: _size_3_t = 0,
-                 ceil_mode: bool = False, count_include_pad: bool = True, divisor_override: Optional[int] = None) -> None:
-        super(AvgPool3d, self).__init__()
+    def __init__(
+        self,
+        kernel_size: _size_2_t,
+        stride: Optional[_size_2_t] = None,
+        padding: _size_2_t = 0,
+        ceil_mode: bool = False,
+        count_include_pad: bool = True,
+        divisor_override: Optional[int] = None,
+    ) -> None:
+        super(AvgPool2d, self).__init__()
         self.kernel_size = kernel_size
         self.stride = stride if (stride is not None) else kernel_size
         self.padding = padding
@@ -697,14 +806,15 @@ class AvgPool3d(_AvgPoolNd):
         self.divisor_override = divisor_override
 
     def forward(self, input: Tensor) -> Tensor:
-        return F.avg_pool3d(input, self.kernel_size, self.stride,
-                            self.padding, self.ceil_mode, self.count_include_pad, self.divisor_override)
-
-    def __setstate__(self, d):
-        super(AvgPool3d, self).__setstate__(d)
-        self.__dict__.setdefault('padding', 0)
-        self.__dict__.setdefault('ceil_mode', False)
-        self.__dict__.setdefault('count_include_pad', True)
+        return F.avg_pool2d(
+            input,
+            self.kernel_size,
+            self.stride,
+            self.padding,
+            self.ceil_mode,
+            self.count_include_pad,
+            self.divisor_override,
+        )
 
 
 class FractionalMaxPool2d(Module):
@@ -737,38 +847,51 @@ class FractionalMaxPool2d(Module):
     .. _Fractional MaxPooling:
         https://arxiv.org/abs/1412.6071
     """
-    __constants__ = ['kernel_size', 'return_indices', 'output_size',
-                     'output_ratio']
+    __constants__ = ["kernel_size", "return_indices", "output_size", "output_ratio"]
 
     kernel_size: _size_2_t
     return_indices: bool
     output_size: _size_2_t
     output_ratio: _ratio_2_t
 
-    def __init__(self, kernel_size: _size_2_t, output_size: Optional[_size_2_t] = None,
-                 output_ratio: Optional[_ratio_2_t] = None,
-                 return_indices: bool = False, _random_samples=None) -> None:
+    def __init__(
+        self,
+        kernel_size: _size_2_t,
+        output_size: Optional[_size_2_t] = None,
+        output_ratio: Optional[_ratio_2_t] = None,
+        return_indices: bool = False,
+        _random_samples=None,
+    ) -> None:
         super(FractionalMaxPool2d, self).__init__()
         self.kernel_size = _pair(kernel_size)
         self.return_indices = return_indices
-        self.register_buffer('_random_samples', _random_samples)
+        self.register_buffer("_random_samples", _random_samples)
         self.output_size = _pair(output_size) if output_size is not None else None
         self.output_ratio = _pair(output_ratio) if output_ratio is not None else None
         if output_size is None and output_ratio is None:
-            raise ValueError("FractionalMaxPool2d requires specifying either "
-                             "an output size, or a pooling ratio")
+            raise ValueError(
+                "FractionalMaxPool2d requires specifying either "
+                "an output size, or a pooling ratio"
+            )
         if output_size is not None and output_ratio is not None:
-            raise ValueError("only one of output_size and output_ratio may be specified")
+            raise ValueError(
+                "only one of output_size and output_ratio may be specified"
+            )
         if self.output_ratio is not None:
             if not (0 < self.output_ratio[0] < 1 and 0 < self.output_ratio[1] < 1):
-                raise ValueError("output_ratio must be between 0 and 1 (got {})"
-                                 .format(output_ratio))
+                raise ValueError(
+                    "output_ratio must be between 0 and 1 (got {})".format(output_ratio)
+                )
 
     def forward(self, input: Tensor) -> Tensor:
         return F.fractional_max_pool2d(
-            input, self.kernel_size, self.output_size, self.output_ratio,
+            input,
+            self.kernel_size,
+            self.output_size,
+            self.output_ratio,
             self.return_indices,
-            _random_samples=self._random_samples)
+            _random_samples=self._random_samples,
+        )
 
 
 class FractionalMaxPool3d(Module):
@@ -801,47 +924,69 @@ class FractionalMaxPool3d(Module):
     .. _Fractional MaxPooling:
         https://arxiv.org/abs/1412.6071
     """
-    __constants__ = ['kernel_size', 'return_indices', 'output_size',
-                     'output_ratio']
+    __constants__ = ["kernel_size", "return_indices", "output_size", "output_ratio"]
     kernel_size: _size_3_t
     return_indices: bool
     output_size: _size_3_t
     output_ratio: _ratio_3_t
 
-    def __init__(self, kernel_size: _size_3_t, output_size: Optional[_size_3_t] = None,
-                 output_ratio: Optional[_ratio_3_t] = None,
-                 return_indices: bool = False, _random_samples=None) -> None:
+    def __init__(
+        self,
+        kernel_size: _size_3_t,
+        output_size: Optional[_size_3_t] = None,
+        output_ratio: Optional[_ratio_3_t] = None,
+        return_indices: bool = False,
+        _random_samples=None,
+    ) -> None:
         super(FractionalMaxPool3d, self).__init__()
         self.kernel_size = _triple(kernel_size)
         self.return_indices = return_indices
-        self.register_buffer('_random_samples', _random_samples)
+        self.register_buffer("_random_samples", _random_samples)
         self.output_size = _triple(output_size) if output_size is not None else None
         self.output_ratio = _triple(output_ratio) if output_ratio is not None else None
         if output_size is None and output_ratio is None:
-            raise ValueError("FractionalMaxPool3d requires specifying either "
-                             "an output size, or a pooling ratio")
+            raise ValueError(
+                "FractionalMaxPool3d requires specifying either "
+                "an output size, or a pooling ratio"
+            )
         if output_size is not None and output_ratio is not None:
-            raise ValueError("only one of output_size and output_ratio may be specified")
+            raise ValueError(
+                "only one of output_size and output_ratio may be specified"
+            )
         if self.output_ratio is not None:
-            if not (0 < self.output_ratio[0] < 1 and 0 < self.output_ratio[1] < 1 and 0 < self.output_ratio[2] < 1):
-                raise ValueError("output_ratio must be between 0 and 1 (got {})"
-                                 .format(output_ratio))
+            if not (
+                0 < self.output_ratio[0] < 1
+                and 0 < self.output_ratio[1] < 1
+                and 0 < self.output_ratio[2] < 1
+            ):
+                raise ValueError(
+                    "output_ratio must be between 0 and 1 (got {})".format(output_ratio)
+                )
 
     def forward(self, input: Tensor) -> Tensor:
         return F.fractional_max_pool3d(
-            input, self.kernel_size, self.output_size, self.output_ratio,
+            input,
+            self.kernel_size,
+            self.output_size,
+            self.output_ratio,
             self.return_indices,
-            _random_samples=self._random_samples)
+            _random_samples=self._random_samples,
+        )
 
 
 class _LPPoolNd(Module):
-    __constants__ = ['norm_type', 'kernel_size', 'stride', 'ceil_mode']
+    __constants__ = ["norm_type", "kernel_size", "stride", "ceil_mode"]
 
     norm_type: float
     ceil_mode: bool
 
-    def __init__(self, norm_type: float, kernel_size: _size_any_t, stride: Optional[_size_any_t] = None,
-                 ceil_mode: bool = False) -> None:
+    def __init__(
+        self,
+        norm_type: float,
+        kernel_size: _size_any_t,
+        stride: Optional[_size_any_t] = None,
+        ceil_mode: bool = False,
+    ) -> None:
         super(_LPPoolNd, self).__init__()
         self.norm_type = norm_type
         self.kernel_size = kernel_size
@@ -849,8 +994,10 @@ class _LPPoolNd(Module):
         self.ceil_mode = ceil_mode
 
     def extra_repr(self) -> str:
-        return 'norm_type={norm_type}, kernel_size={kernel_size}, stride={stride}, ' \
-            'ceil_mode={ceil_mode}'.format(**self.__dict__)
+        return (
+            "norm_type={norm_type}, kernel_size={kernel_size}, stride={stride}, "
+            "ceil_mode={ceil_mode}".format(**self.__dict__)
+        )
 
 
 class LPPool1d(_LPPoolNd):
@@ -891,8 +1038,9 @@ class LPPool1d(_LPPoolNd):
     stride: _size_1_t
 
     def forward(self, input: Tensor) -> Tensor:
-        return F.lp_pool1d(input, float(self.norm_type), self.kernel_size,
-                           self.stride, self.ceil_mode)
+        return F.lp_pool1d(
+            input, float(self.norm_type), self.kernel_size, self.stride, self.ceil_mode
+        )
 
 
 class LPPool2d(_LPPoolNd):
@@ -946,21 +1094,25 @@ class LPPool2d(_LPPoolNd):
     stride: _size_2_t
 
     def forward(self, input: Tensor) -> Tensor:
-        return F.lp_pool2d(input, float(self.norm_type), self.kernel_size,
-                           self.stride, self.ceil_mode)
+        return F.lp_pool2d(
+            input, float(self.norm_type), self.kernel_size, self.stride, self.ceil_mode
+        )
 
 
 class _AdaptiveMaxPoolNd(Module):
-    __constants__ = ['output_size', 'return_indices']
+    __constants__ = ["output_size", "return_indices"]
     return_indices: bool
 
-    def __init__(self, output_size: _size_any_opt_t, return_indices: bool = False) -> None:
+    def __init__(
+        self, output_size: _size_any_opt_t, return_indices: bool = False
+    ) -> None:
         super(_AdaptiveMaxPoolNd, self).__init__()
         self.output_size = output_size
         self.return_indices = return_indices
 
     def extra_repr(self) -> str:
-        return 'output_size={}'.format(self.output_size)
+        return "output_size={}".format(self.output_size)
+
 
 # FIXME (by @ssnl): Improve adaptive pooling docs: specify what the input and
 #   output shapes are, and how the operation computes output.
@@ -1065,14 +1217,14 @@ class AdaptiveMaxPool3d(_AdaptiveMaxPoolNd):
 
 
 class _AdaptiveAvgPoolNd(Module):
-    __constants__ = ['output_size']
+    __constants__ = ["output_size"]
 
     def __init__(self, output_size: _size_any_opt_t) -> None:
         super(_AdaptiveAvgPoolNd, self).__init__()
         self.output_size = output_size
 
     def extra_repr(self) -> str:
-        return 'output_size={}'.format(self.output_size)
+        return "output_size={}".format(self.output_size)
 
 
 class AdaptiveAvgPool1d(_AdaptiveAvgPoolNd):

@@ -79,6 +79,7 @@ from torch.testing._internal.jit_utils import JitTestCase
 from hypothesis import given
 from hypothesis import strategies as st
 import torch.testing._internal.hypothesis_utils as hu
+
 hu.assert_deadline_disabled()
 
 # Standard library
@@ -87,6 +88,7 @@ import copy
 import io
 import unittest
 import numpy as np
+
 
 class TestPostTrainingStatic(QuantizationTestCase):
     def test_single_layer(self):
@@ -124,7 +126,9 @@ class TestPostTrainingStatic(QuantizationTestCase):
                 model = quantize(base, test_only_eval_fn, [self.calib_data])
                 checkQuantized(model)
                 keys_after = set(list(base.state_dict().keys()))
-                self.assertEqual(keys_before, keys_after)  # simple check that nothing changed
+                self.assertEqual(
+                    keys_before, keys_after
+                )  # simple check that nothing changed
 
                 # in-place version
                 model = AnnotatedSingleLayerLinearModel(qengine)
@@ -137,7 +141,7 @@ class TestPostTrainingStatic(QuantizationTestCase):
         r"""TwoLayerLinearModel has two Linear modules but we only quantize the second one
         `fc2`, and `fc1`is not quantized
         """
-        with override_quantized_engine('fbgemm'):
+        with override_quantized_engine("fbgemm"):
             model = AnnotatedTwoLayerLinearModel()
             model = prepare(model)
 
@@ -162,8 +166,9 @@ class TestPostTrainingStatic(QuantizationTestCase):
             checkQuantized(model)
 
             # test one line API
-            model = quantize(AnnotatedTwoLayerLinearModel(), test_only_eval_fn,
-                             [self.calib_data])
+            model = quantize(
+                AnnotatedTwoLayerLinearModel(), test_only_eval_fn, [self.calib_data]
+            )
             checkQuantized(model)
 
     def test_nested1(self):
@@ -204,10 +209,10 @@ class TestPostTrainingStatic(QuantizationTestCase):
                 checkQuantized(model)
 
                 # test one line API
-                model = quantize(AnnotatedNestedModel(qengine), test_only_eval_fn,
-                                 [self.calib_data])
+                model = quantize(
+                    AnnotatedNestedModel(qengine), test_only_eval_fn, [self.calib_data]
+                )
                 checkQuantized(model)
-
 
     @skipIfNoFBGEMM
     def test_nested2(self):
@@ -245,8 +250,9 @@ class TestPostTrainingStatic(QuantizationTestCase):
         checkQuantized(model)
 
         # test one line API
-        model = quantize(AnnotatedSubNestedModel(), test_only_eval_fn,
-                         [self.calib_data])
+        model = quantize(
+            AnnotatedSubNestedModel(), test_only_eval_fn, [self.calib_data]
+        )
         checkQuantized(model)
 
     def test_nested3(self):
@@ -287,13 +293,15 @@ class TestPostTrainingStatic(QuantizationTestCase):
                 checkQuantized(model)
 
                 # test one line API
-                model = quantize(AnnotatedCustomConfigNestedModel(), test_only_eval_fn,
-                                 [self.calib_data])
+                model = quantize(
+                    AnnotatedCustomConfigNestedModel(),
+                    test_only_eval_fn,
+                    [self.calib_data],
+                )
                 checkQuantized(model)
 
     def test_skip_quant(self):
-        r"""The case when we want to skip quantizing some layers
-        """
+        r"""The case when we want to skip quantizing some layers"""
         for qengine in supported_qengines:
             with override_quantized_engine(qengine):
                 model = AnnotatedSkipQuantModel(qengine)
@@ -316,7 +324,11 @@ class TestPostTrainingStatic(QuantizationTestCase):
                 checkQuantized(model)
 
                 # test one line API
-                model = quantize(AnnotatedSkipQuantModel(qengine), test_only_eval_fn, [self.calib_data])
+                model = quantize(
+                    AnnotatedSkipQuantModel(qengine),
+                    test_only_eval_fn,
+                    [self.calib_data],
+                )
                 checkQuantized(model)
 
     @skipIfNoFBGEMM
@@ -362,7 +374,9 @@ class TestPostTrainingStatic(QuantizationTestCase):
                 model = convert(model)
 
                 def checkQuantized(model):
-                    self.assertEqual(type(model.module.conv1), nn.intrinsic.quantized.ConvReLU2d)
+                    self.assertEqual(
+                        type(model.module.conv1), nn.intrinsic.quantized.ConvReLU2d
+                    )
                     self.assertEqual(type(model.module.myop), nn.quantized.QFunctional)
                     self.assertEqual(type(model.module.avgpool), nn.AdaptiveAvgPool2d)
                     self.assertEqual(type(model.module.fc), nnq.Linear)
@@ -378,7 +392,7 @@ class TestPostTrainingStatic(QuantizationTestCase):
         Test quantization of normalization layers
         """
         model = NormalizationTestModel()
-        model.qconfig = torch.quantization.get_default_qconfig('fbgemm')
+        model.qconfig = torch.quantization.get_default_qconfig("fbgemm")
         prepare(model, inplace=True)
         self.checkObservers(model)
         test_only_eval_fn(model, self.calib_data)
@@ -402,7 +416,8 @@ class TestPostTrainingStatic(QuantizationTestCase):
         checkQuantized(model)
 
         model_oneline = quantize(
-            NormalizationTestModel(), test_only_eval_fn, [self.calib_data])
+            NormalizationTestModel(), test_only_eval_fn, [self.calib_data]
+        )
         checkQuantized(model)
 
     def test_save_load_state_dict(self):
@@ -434,7 +449,9 @@ class TestPostTrainingStatic(QuantizationTestCase):
                 new_state_dict = model.state_dict()
 
                 # Check to make sure the state dict keys match original model after convert.
-                self.assertEqual(set(new_state_dict.keys()), set(quant_state_dict.keys()))
+                self.assertEqual(
+                    set(new_state_dict.keys()), set(quant_state_dict.keys())
+                )
 
                 model.load_state_dict(quant_state_dict)
 
@@ -447,7 +464,7 @@ class TestPostTrainingStatic(QuantizationTestCase):
         Test quantization of activations
         """
         model = ActivationsTestModel()
-        model.qconfig = torch.quantization.get_default_qconfig('fbgemm')
+        model.qconfig = torch.quantization.get_default_qconfig("fbgemm")
         prepare(model, inplace=True)
         self.checkObservers(model)
         test_only_eval_fn(model, self.calib_data)
@@ -464,8 +481,9 @@ class TestPostTrainingStatic(QuantizationTestCase):
         checkQuantized(model)
 
         # test one line API
-        model_oneline = quantize(ActivationsTestModel(), test_only_eval_fn,
-                                 [self.calib_data])
+        model_oneline = quantize(
+            ActivationsTestModel(), test_only_eval_fn, [self.calib_data]
+        )
         checkQuantized(model_oneline)
 
     @override_qengines
@@ -476,15 +494,15 @@ class TestPostTrainingStatic(QuantizationTestCase):
         qengine = torch.backends.quantized.engine
         model = QuantStubModel()
         counter = {
-            'pre_forwards': 0,
-            'forwards': 0,
+            "pre_forwards": 0,
+            "forwards": 0,
         }
 
         def fw_pre_hook(h_module, input):
-            counter['pre_forwards'] += 1
+            counter["pre_forwards"] += 1
 
         def fw_hook(h_module, input, output):
-            counter['forwards'] += 1
+            counter["forwards"] += 1
 
         model.fc.register_forward_pre_hook(fw_pre_hook)
         model.fc.register_forward_hook(fw_hook)
@@ -495,20 +513,32 @@ class TestPostTrainingStatic(QuantizationTestCase):
         def checkHooksIsPresent(model, before_convert=True):
             num_fwd_hooks = 1
             if before_convert:
-                self.assertEqual(len(model.quant._forward_hooks.values()), 1,
-                                 "Quantization observer hook has disappeared")
+                self.assertEqual(
+                    len(model.quant._forward_hooks.values()),
+                    1,
+                    "Quantization observer hook has disappeared",
+                )
                 num_fwd_hooks = 2
 
             self.assertObjectIn(fw_pre_hook, model.fc._forward_pre_hooks.values())
             self.assertObjectIn(fw_hook, model.fc._forward_hooks.values())
-            self.assertEqual(len(model.fc._forward_pre_hooks.values()), 1,
-                             "Extra pre forward hooks have appeared on a layer")
+            self.assertEqual(
+                len(model.fc._forward_pre_hooks.values()),
+                1,
+                "Extra pre forward hooks have appeared on a layer",
+            )
             # During static quantization non stub layers are provided with quantization observer hook too
-            self.assertEqual(len(model.fc._forward_hooks.values()), num_fwd_hooks,
-                             "Extra post forward hooks have appeared on a layer")
+            self.assertEqual(
+                len(model.fc._forward_hooks.values()),
+                num_fwd_hooks,
+                "Extra post forward hooks have appeared on a layer",
+            )
             # Implicitly check that fw_hook goes after _observer_forward_hook
-            self.assertEqual(list(model.fc._forward_hooks.values())[-1], fw_hook,
-                             "_observer_forward_hook is not a first entry of the hooks list")
+            self.assertEqual(
+                list(model.fc._forward_hooks.values())[-1],
+                fw_hook,
+                "_observer_forward_hook is not a first entry of the hooks list",
+            )
 
         checkHooksIsPresent(model, True)
         test_only_eval_fn(model, self.calib_data)
@@ -517,24 +547,59 @@ class TestPostTrainingStatic(QuantizationTestCase):
 
     @skipIfNoFBGEMM
     def test_quantized_embedding(self):
-        r""" Test the post-training quantization flow, serialization and scripting
+        r"""Test the post-training quantization flow, serialization and scripting
         of embedding modules
         """
         model = EmbeddingModule().eval()
-        indices = torch.tensor([9, 6, 5, 7, 8, 8, 9, 2, 8, 6, 6, 9, 1, 6, 8, 8, 3, 2, 3, 6, 3, 6, 5, 7, 0, 8, 4, 6, 5, 8, 2, 3])
+        indices = torch.tensor(
+            [
+                9,
+                6,
+                5,
+                7,
+                8,
+                8,
+                9,
+                2,
+                8,
+                6,
+                6,
+                9,
+                1,
+                6,
+                8,
+                8,
+                3,
+                2,
+                3,
+                6,
+                3,
+                6,
+                5,
+                7,
+                0,
+                8,
+                4,
+                6,
+                5,
+                8,
+                2,
+                3,
+            ]
+        )
         weights = torch.randn(10, 12, dtype=torch.float32)
         model.qconfig = float_qparams_weight_only_qconfig
         prepare(model, inplace=True)
         convert(model, inplace=True)
-        self.assertTrue('QuantizedEmbedding' in str(model))
+        self.assertTrue("QuantizedEmbedding" in str(model))
         self.assertEqual(type(model.emb), torch.nn.quantized.Embedding)
         self.checkScriptable(model, [[indices]], check_save_load=True)
 
         model = EmbeddingWithLinear().eval()
         prepare(model, inplace=True)
         convert(model, inplace=True)
-        self.assertTrue('QuantizedEmbedding' in str(model))
-        self.assertTrue('QuantizedLinear' in str(model))
+        self.assertTrue("QuantizedEmbedding" in str(model))
+        self.assertTrue("QuantizedLinear" in str(model))
         self.checkQuantizedLinear(model.fc)
 
     @skipIfNoFBGEMM
@@ -557,45 +622,96 @@ class TestPostTrainingStatic(QuantizationTestCase):
         self.assertEqual(type(m2.fc), nnq.Linear)
         self.assertEqual(type(m2.dequant), DeQuantStub)
 
-
     @skipIfNoFBGEMM
     def test_quantized_embedding_bag(self):
-        r""" Test the post-training quantization flow, serialization and scripting
+        r"""Test the post-training quantization flow, serialization and scripting
         of embedding_bag modules
         """
-        indices = torch.tensor([9, 6, 5, 7, 8, 8, 9, 2, 8, 6, 6, 9, 1, 6, 8, 8, 3, 2, 3, 6, 3, 6, 5, 7, 0, 8, 4, 6, 5, 8, 2, 3])
+        indices = torch.tensor(
+            [
+                9,
+                6,
+                5,
+                7,
+                8,
+                8,
+                9,
+                2,
+                8,
+                6,
+                6,
+                9,
+                1,
+                6,
+                8,
+                8,
+                3,
+                2,
+                3,
+                6,
+                3,
+                6,
+                5,
+                7,
+                0,
+                8,
+                4,
+                6,
+                5,
+                8,
+                2,
+                3,
+            ]
+        )
         offsets = torch.tensor([0, 19, 20, 28, 28, 32])
         weights = torch.randn(10, 12, dtype=torch.float32)
 
         for dtype in [torch.quint8, torch.quint4x2]:
             model = EmbeddingBagModule().eval()
-            float_qparams_observer = PerChannelMinMaxObserver.with_args(dtype=dtype,
-                                                                        qscheme=torch.per_channel_affine_float_qparams,
-                                                                        ch_axis=0)
-            float_qparams_qconfig = QConfigDynamic(activation=default_dynamic_quant_observer,
-                                                   weight=float_qparams_observer)
+            float_qparams_observer = PerChannelMinMaxObserver.with_args(
+                dtype=dtype, qscheme=torch.per_channel_affine_float_qparams, ch_axis=0
+            )
+            float_qparams_qconfig = QConfigDynamic(
+                activation=default_dynamic_quant_observer, weight=float_qparams_observer
+            )
             model.qconfig = float_qparams_qconfig
 
             prepare(model, inplace=True)
             quantized_model = convert(model)
 
-            per_sample_weights = torch.from_numpy(np.random.uniform(
-                low=0.01, high=0.5, size=[len(indices)]).astype(np.float32))
+            per_sample_weights = torch.from_numpy(
+                np.random.uniform(low=0.01, high=0.5, size=[len(indices)]).astype(
+                    np.float32
+                )
+            )
 
             # Test to make sure module is quantized correctly.
-            self.assertTrue('QuantizedEmbeddingBag' in str(quantized_model))
-            self.checkDynamicQuantizedModule(quantized_model.emb, torch.nn.quantized.EmbeddingBag, torch.quint8)
-            self.checkScriptable(quantized_model, [[indices, offsets, per_sample_weights]], check_save_load=True)
+            self.assertTrue("QuantizedEmbeddingBag" in str(quantized_model))
+            self.checkDynamicQuantizedModule(
+                quantized_model.emb, torch.nn.quantized.EmbeddingBag, torch.quint8
+            )
+            self.checkScriptable(
+                quantized_model,
+                [[indices, offsets, per_sample_weights]],
+                check_save_load=True,
+            )
 
             class EmbeddingBagWithLinear(torch.nn.Module):
                 def __init__(self):
                     super().__init__()
-                    self.emb = torch.nn.EmbeddingBag(num_embeddings=10, embedding_dim=12,
-                                                     include_last_offset=True, scale_grad_by_freq=False, mode='sum')
+                    self.emb = torch.nn.EmbeddingBag(
+                        num_embeddings=10,
+                        embedding_dim=12,
+                        include_last_offset=True,
+                        scale_grad_by_freq=False,
+                        mode="sum",
+                    )
                     self.fc = torch.nn.Linear(5, 5)
 
                 def forward(self, indices, offsets, per_sample_weights, linear_in):
-                    return self.emb(indices, offsets, per_sample_weights), self.fc(linear_in)
+                    return self.emb(indices, offsets, per_sample_weights), self.fc(
+                        linear_in
+                    )
 
             # Test quantization of embedding_bag layer only
             model2 = EmbeddingBagWithLinear().eval()
@@ -603,9 +719,11 @@ class TestPostTrainingStatic(QuantizationTestCase):
             prepare(model2, inplace=True)
             quantized_model = convert(model2)
 
-            self.assertTrue('QuantizedEmbeddingBag' in str(quantized_model))
+            self.assertTrue("QuantizedEmbeddingBag" in str(quantized_model))
             self.checkLinear(model2.fc)
-            self.checkDynamicQuantizedModule(quantized_model.emb, torch.nn.quantized.EmbeddingBag, torch.quint8)
+            self.checkDynamicQuantizedModule(
+                quantized_model.emb, torch.nn.quantized.EmbeddingBag, torch.quint8
+            )
 
     @skipIfNoFBGEMM
     def test_custom_module_class(self):
@@ -627,7 +745,7 @@ class TestPostTrainingStatic(QuantizationTestCase):
 
             @classmethod
             def from_float(cls, float_module):
-                assert hasattr(float_module, 'qconfig')
+                assert hasattr(float_module, "qconfig")
                 observed = cls(float_module.conv)
                 observed.qconfig = float_module.qconfig
                 return observed
@@ -642,10 +760,11 @@ class TestPostTrainingStatic(QuantizationTestCase):
 
             @classmethod
             def from_observed(cls, observed_module):
-                assert hasattr(observed_module, 'qconfig')
-                assert hasattr(observed_module, 'activation_post_process')
-                observed_module.conv.activation_post_process = \
+                assert hasattr(observed_module, "qconfig")
+                assert hasattr(observed_module, "activation_post_process")
+                observed_module.conv.activation_post_process = (
                     observed_module.activation_post_process
+                )
                 quantized = cls(nnq.Conv2d.from_float(observed_module.conv))
                 return quantized
 
@@ -683,10 +802,16 @@ class TestPostTrainingStatic(QuantizationTestCase):
         # instantiate M and RefM and align the parameters
         original_m = M()
         original_ref_m = RefM()
-        original_ref_m.conv1.weight = torch.nn.Parameter(original_m.conv.weight.detach())
+        original_ref_m.conv1.weight = torch.nn.Parameter(
+            original_m.conv.weight.detach()
+        )
         original_ref_m.conv1.bias = torch.nn.Parameter(original_m.conv.bias.detach())
-        original_ref_m.conv2.weight = torch.nn.Parameter(original_m.custom.conv.weight.detach())
-        original_ref_m.conv2.bias = torch.nn.Parameter(original_m.custom.conv.bias.detach())
+        original_ref_m.conv2.weight = torch.nn.Parameter(
+            original_m.custom.conv.weight.detach()
+        )
+        original_ref_m.conv2.bias = torch.nn.Parameter(
+            original_m.custom.conv.bias.detach()
+        )
 
         original_m.qconfig = default_qconfig
         prepare_custom_config_dict = {
@@ -699,18 +824,14 @@ class TestPostTrainingStatic(QuantizationTestCase):
                 ObservedCustomModule: QuantizedCustomModule
             }
         }
-        m = prepare(
-            original_m,
-            prepare_custom_config_dict=prepare_custom_config_dict)
+        m = prepare(original_m, prepare_custom_config_dict=prepare_custom_config_dict)
         self.checkObservers(m, None, prepare_custom_config_dict)
         # calibration
         m(data)
         # all activation observers are inserted in the top level module
 
         # check converted/quantized model
-        m = convert(
-            m,
-            convert_custom_config_dict=convert_custom_config_dict)
+        m = convert(m, convert_custom_config_dict=convert_custom_config_dict)
         # check if the module is properly quantized
         self.assertEqual(type(m.quant), nnq.Quantize)
         self.assertEqual(type(m.conv), nnq.Conv2d)
@@ -734,12 +855,13 @@ class TestPostTrainingStatic(QuantizationTestCase):
         weight observers fails in the prepare step, as opposed to the convert step.
         """
         m = torch.nn.Sequential(torch.nn.ConvTranspose2d(1, 1, 1))
-        m.qconfig = torch.quantization.get_default_qconfig('fbgemm')
+        m.qconfig = torch.quantization.get_default_qconfig("fbgemm")
         with self.assertRaises(AssertionError) as context:
             mp = torch.quantization.prepare(m)
         self.assertTrue(
-            str(context.exception) ==
-            'Per channel weight observer is not supported yet for ConvTranspose{n}d.')
+            str(context.exception)
+            == "Per channel weight observer is not supported yet for ConvTranspose{n}d."
+        )
 
 
 @skipIfNoFBGEMM
@@ -751,10 +873,12 @@ class TestPostTrainingDynamic(QuantizationTestCase):
         """
         for dtype in [torch.qint8, torch.float16]:
             model = SingleLayerLinearDynamicModel().eval()
-            qconfig = float16_dynamic_qconfig if dtype == torch.float16 else default_dynamic_qconfig
-            qconfig_dict = {
-                'fc1': qconfig
-            }
+            qconfig = (
+                float16_dynamic_qconfig
+                if dtype == torch.float16
+                else default_dynamic_qconfig
+            )
+            qconfig_dict = {"fc1": qconfig}
             prepare_dynamic(model, qconfig_dict)
             convert_dynamic(model)
 
@@ -771,7 +895,9 @@ class TestPostTrainingDynamic(QuantizationTestCase):
             model = quantize_dynamic(base, qconfig_dict)
             checkQuantized(model)
             keys_after = set(list(base.state_dict().keys()))
-            self.assertEqual(keys_before, keys_after)  # simple check that nothing changed
+            self.assertEqual(
+                keys_before, keys_after
+            )  # simple check that nothing changed
 
             # in-place version
             model = SingleLayerLinearDynamicModel()
@@ -789,10 +915,12 @@ class TestPostTrainingDynamic(QuantizationTestCase):
         """
         for dtype in [torch.qint8, torch.float16]:
             model = TwoLayerLinearModel().eval()
-            qconfig = float16_dynamic_qconfig if dtype == torch.float16 else default_dynamic_qconfig
-            qconfig_dict = {
-                'fc2': qconfig
-            }
+            qconfig = (
+                float16_dynamic_qconfig
+                if dtype == torch.float16
+                else default_dynamic_qconfig
+            )
+            qconfig_dict = {"fc2": qconfig}
             prepare_dynamic(model, qconfig_dict)
 
             convert_dynamic(model)
@@ -810,7 +938,7 @@ class TestPostTrainingDynamic(QuantizationTestCase):
             checkQuantized(model)
 
             # Test set API
-            model = quantize_dynamic(TwoLayerLinearModel().eval(), {'fc2'}, dtype=dtype)
+            model = quantize_dynamic(TwoLayerLinearModel().eval(), {"fc2"}, dtype=dtype)
             checkQuantized(model)
 
     def test_nested1(self):
@@ -819,11 +947,12 @@ class TestPostTrainingDynamic(QuantizationTestCase):
         """
         for dtype in [torch.qint8, torch.float16]:
             model = NestedModel().eval()
-            qconfig = float16_dynamic_qconfig if dtype == torch.float16 else default_dynamic_qconfig
-            qconfig_dict = {
-                'fc3': qconfig,
-                'sub2.fc1': qconfig
-            }
+            qconfig = (
+                float16_dynamic_qconfig
+                if dtype == torch.float16
+                else default_dynamic_qconfig
+            )
+            qconfig_dict = {"fc3": qconfig, "sub2.fc1": qconfig}
 
             prepare_dynamic(model, qconfig_dict)
             convert_dynamic(model)
@@ -842,7 +971,9 @@ class TestPostTrainingDynamic(QuantizationTestCase):
             model = quantize_dynamic(NestedModel().eval(), qconfig_dict)
             checkQuantized(model)
 
-            model = quantize_dynamic(NestedModel().eval(), {'fc3', 'sub2.fc1'}, dtype=dtype)
+            model = quantize_dynamic(
+                NestedModel().eval(), {"fc3", "sub2.fc1"}, dtype=dtype
+            )
             checkQuantized(model)
 
     def test_nested2(self):
@@ -851,11 +982,12 @@ class TestPostTrainingDynamic(QuantizationTestCase):
         """
         for dtype in [torch.qint8, torch.float16]:
             model = NestedModel().eval()
-            qconfig = float16_dynamic_qconfig if dtype == torch.float16 else default_dynamic_qconfig
-            qconfig_dict = {
-                'fc3': qconfig,
-                'sub2': qconfig
-            }
+            qconfig = (
+                float16_dynamic_qconfig
+                if dtype == torch.float16
+                else default_dynamic_qconfig
+            )
+            qconfig_dict = {"fc3": qconfig, "sub2": qconfig}
             prepare_dynamic(model, qconfig_dict)
 
             convert_dynamic(model)
@@ -876,7 +1008,7 @@ class TestPostTrainingDynamic(QuantizationTestCase):
             checkQuantized(model)
 
             # Test set API
-            model = quantize_dynamic(NestedModel().eval(), {'fc3', 'sub2'}, dtype=dtype)
+            model = quantize_dynamic(NestedModel().eval(), {"fc3", "sub2"}, dtype=dtype)
             checkQuantized(model)
 
     def test_nested3(self):
@@ -885,11 +1017,15 @@ class TestPostTrainingDynamic(QuantizationTestCase):
         """
         for dtype in [torch.qint8, torch.float16]:
             model = NestedModel().eval()
-            qconfig = float16_dynamic_qconfig if dtype == torch.float16 else default_dynamic_qconfig
+            qconfig = (
+                float16_dynamic_qconfig
+                if dtype == torch.float16
+                else default_dynamic_qconfig
+            )
             qconfig_dynamic_dict = {
-                'fc3': qconfig,
-                'sub2': qconfig,
-                'sub2.fc1': qconfig
+                "fc3": qconfig,
+                "sub2": qconfig,
+                "sub2.fc1": qconfig,
             }
             prepare_dynamic(model, qconfig_dynamic_dict)
 
@@ -909,7 +1045,9 @@ class TestPostTrainingDynamic(QuantizationTestCase):
             checkQuantized(model)
 
             # Test set API
-            model = quantize_dynamic(NestedModel().eval(), {'fc3', 'sub2', 'sub2.fc1'}, dtype=dtype)
+            model = quantize_dynamic(
+                NestedModel().eval(), {"fc3", "sub2", "sub2.fc1"}, dtype=dtype
+            )
             checkQuantized(model)
 
     def test_type_match_rule(self):
@@ -918,12 +1056,12 @@ class TestPostTrainingDynamic(QuantizationTestCase):
         """
         for dtype in [torch.qint8, torch.float16]:
             model = NestedModel().eval()
-            qconfig = float16_dynamic_qconfig if dtype == torch.float16 else default_dynamic_qconfig
-            qconfig_dict = {
-                'fc3': None,
-                'sub2.fc1': None,
-                torch.nn.Linear: qconfig
-            }
+            qconfig = (
+                float16_dynamic_qconfig
+                if dtype == torch.float16
+                else default_dynamic_qconfig
+            )
+            qconfig_dict = {"fc3": None, "sub2.fc1": None, torch.nn.Linear: qconfig}
 
             prepare_dynamic(model, qconfig_dict)
             test_only_eval_fn(model, self.calib_data)
@@ -945,12 +1083,9 @@ class TestPostTrainingDynamic(QuantizationTestCase):
             checkQuantized(model)
 
     def test_per_channel_linear_quantize(self):
-        r"""Test quantization for per_channel dynamic quantization
-        """
+        r"""Test quantization for per_channel dynamic quantization"""
         model = NestedModel().eval()
-        qconfig_dict = {
-            torch.nn.Linear: per_channel_dynamic_qconfig
-        }
+        qconfig_dict = {torch.nn.Linear: per_channel_dynamic_qconfig}
 
         prepare_dynamic(model, qconfig_dict)
         test_only_eval_fn(model, self.calib_data)
@@ -970,35 +1105,43 @@ class TestPostTrainingDynamic(QuantizationTestCase):
         model = quantize_dynamic(NestedModel().eval(), qconfig_dict)
         checkQuantized(model)
 
-    @given(qconfig=st.sampled_from([per_channel_dynamic_qconfig, default_dynamic_qconfig]),
-           dtype=st.sampled_from([torch.qint8, torch.float16]))
+    @given(
+        qconfig=st.sampled_from([per_channel_dynamic_qconfig, default_dynamic_qconfig]),
+        dtype=st.sampled_from([torch.qint8, torch.float16]),
+    )
     def test_quantized_rnn(self, qconfig, dtype):
-        r"""Test dynamic quantization, scriptability and serialization for dynamic quantized lstm modules on int8 and fp16
-        """
+        r"""Test dynamic quantization, scriptability and serialization for dynamic quantized lstm modules on int8 and fp16"""
         niter = 10
-        x = torch.tensor([[100, -155],
-                          [-155, 100],
-                          [100, -155]], dtype=torch.float).unsqueeze(0).repeat(niter, 1, 1)
-        qconfig_dict = {
-            torch.nn.LSTM : qconfig,
-            torch.nn.GRU: qconfig
-        }
+        x = (
+            torch.tensor([[100, -155], [-155, 100], [100, -155]], dtype=torch.float)
+            .unsqueeze(0)
+            .repeat(niter, 1, 1)
+        )
+        qconfig_dict = {torch.nn.LSTM: qconfig, torch.nn.GRU: qconfig}
 
         def checkQuantized(model, module_type):
-            mod_type_map = {'LSTM': torch.nn.quantized.dynamic.LSTM,
-                            'GRU': torch.nn.quantized.dynamic.GRU}
-            mod_repr_map = {'LSTM': 'DynamicQuantizedLSTM',
-                            'GRU': 'DynamicQuantizedGRU'}
+            mod_type_map = {
+                "LSTM": torch.nn.quantized.dynamic.LSTM,
+                "GRU": torch.nn.quantized.dynamic.GRU,
+            }
+            mod_repr_map = {
+                "LSTM": "DynamicQuantizedLSTM",
+                "GRU": "DynamicQuantizedGRU",
+            }
             self.assertTrue(mod_repr_map[module_type] in str(model_quantized))
-            self.checkDynamicQuantizedModule(model_quantized.mod, mod_type_map[module_type], dtype)
+            self.checkDynamicQuantizedModule(
+                model_quantized.mod, mod_type_map[module_type], dtype
+            )
 
-        for module_type in ['LSTM', 'GRU']:
+        for module_type in ["LSTM", "GRU"]:
             model = RNNDynamicModel(module_type).eval()
 
             if dtype == torch.float16:
                 model_quantized = quantize_dynamic(model=model, dtype=dtype)
             else:
-                model_quantized = quantize_dynamic(model=model, qconfig_spec=qconfig_dict, dtype=dtype)
+                model_quantized = quantize_dynamic(
+                    model=model, qconfig_spec=qconfig_dict, dtype=dtype
+                )
 
             checkQuantized(model_quantized, module_type)
             self.checkScriptable(model_quantized, [[x]], check_save_load=True)
@@ -1008,7 +1151,9 @@ class TestPostTrainingDynamic(QuantizationTestCase):
                     super(ScriptWrapperPackedLSTM, self).__init__()
                     self.cell = cell
 
-                def forward(self, x: PackedSequence) -> Tuple[PackedSequence, Tuple[torch.Tensor, torch.Tensor]]:
+                def forward(
+                    self, x: PackedSequence
+                ) -> Tuple[PackedSequence, Tuple[torch.Tensor, torch.Tensor]]:
                     return self.cell(x)
 
             class ScriptWrapperPackedGRU(torch.nn.Module):
@@ -1016,65 +1161,80 @@ class TestPostTrainingDynamic(QuantizationTestCase):
                     super(ScriptWrapperPackedGRU, self).__init__()
                     self.cell = cell
 
-                def forward(self, x: PackedSequence) -> Tuple[PackedSequence, torch.Tensor]:
+                def forward(
+                    self, x: PackedSequence
+                ) -> Tuple[PackedSequence, torch.Tensor]:
                     return self.cell(x)
 
-            script_wrapper_map = {'LSTM': ScriptWrapperPackedLSTM,
-                                  'GRU': ScriptWrapperPackedGRU}
-            packed_input = torch.nn.utils.rnn.pack_padded_sequence(x, torch.tensor([10, 5, 2]))
-            model_with_packed_input = script_wrapper_map[module_type](model_quantized.mod)
+            script_wrapper_map = {
+                "LSTM": ScriptWrapperPackedLSTM,
+                "GRU": ScriptWrapperPackedGRU,
+            }
+            packed_input = torch.nn.utils.rnn.pack_padded_sequence(
+                x, torch.tensor([10, 5, 2])
+            )
+            model_with_packed_input = script_wrapper_map[module_type](
+                model_quantized.mod
+            )
             model_with_packed_input(packed_input)
             scripted = torch.jit.script(model_with_packed_input)
             scripted(packed_input)
             # We cannot trace with input dtype being a packed sequence
-            self._checkScriptable(model_with_packed_input, scripted, [[packed_input]], True)
+            self._checkScriptable(
+                model_with_packed_input, scripted, [[packed_input]], True
+            )
 
-
-    @given(qconfig=st.sampled_from([per_channel_dynamic_qconfig, default_dynamic_qconfig]),
-           dtype=st.sampled_from([torch.qint8, torch.float16]))
+    @given(
+        qconfig=st.sampled_from([per_channel_dynamic_qconfig, default_dynamic_qconfig]),
+        dtype=st.sampled_from([torch.qint8, torch.float16]),
+    )
     def test_quantized_rnn_cell(self, qconfig, dtype):
-        r"""Test dynamic quantization, scriptability and serialization for dynamic quantized rnn cell modules on int8 and fp16
-        """
+        r"""Test dynamic quantization, scriptability and serialization for dynamic quantized rnn cell modules on int8 and fp16"""
         qconfig_dict = {
-            torch.nn.LSTMCell : qconfig,
-            torch.nn.GRUCell : qconfig,
-            torch.nn.RNNCell : qconfig
+            torch.nn.LSTMCell: qconfig,
+            torch.nn.GRUCell: qconfig,
+            torch.nn.RNNCell: qconfig,
         }
 
-        for module_type in ['LSTMCell', 'GRUCell', 'RNNTanh', 'RNNReLU']:
+        for module_type in ["LSTMCell", "GRUCell", "RNNTanh", "RNNReLU"]:
             model = RNNCellDynamicModel(module_type).eval()
-            x = torch.tensor([[100, -155],
-                             [-155, 100],
-                             [100, -155]], dtype=torch.float)
+            x = torch.tensor([[100, -155], [-155, 100], [100, -155]], dtype=torch.float)
 
-            if torch.backends.quantized.engine == 'qnnpack' and dtype == torch.float16:
+            if torch.backends.quantized.engine == "qnnpack" and dtype == torch.float16:
                 continue
                 # fp16 dynamic quant is not supported for qnnpack
 
             if dtype == torch.float16:
                 model_quantized = quantize_dynamic(model=model, dtype=dtype)
             else:
-                model_quantized = quantize_dynamic(model=model, qconfig_spec=qconfig_dict, dtype=dtype)
+                model_quantized = quantize_dynamic(
+                    model=model, qconfig_spec=qconfig_dict, dtype=dtype
+                )
 
             def checkQuantized(model, module_type):
-                mod_type_map = {'LSTMCell': torch.nn.quantized.dynamic.LSTMCell,
-                                'GRUCell': torch.nn.quantized.dynamic.GRUCell,
-                                'RNNTanh': torch.nn.quantized.dynamic.RNNCell,
-                                'RNNReLU': torch.nn.quantized.dynamic.RNNCell}
+                mod_type_map = {
+                    "LSTMCell": torch.nn.quantized.dynamic.LSTMCell,
+                    "GRUCell": torch.nn.quantized.dynamic.GRUCell,
+                    "RNNTanh": torch.nn.quantized.dynamic.RNNCell,
+                    "RNNReLU": torch.nn.quantized.dynamic.RNNCell,
+                }
 
-                mod_repr_map = {'LSTMCell': 'DynamicQuantizedLSTMCell',
-                                'GRUCell': 'DynamicQuantizedGRUCell',
-                                'RNNTanh': 'DynamicQuantizedRNNCell',
-                                'RNNReLU': 'DynamicQuantizedRNNCell'}
+                mod_repr_map = {
+                    "LSTMCell": "DynamicQuantizedLSTMCell",
+                    "GRUCell": "DynamicQuantizedGRUCell",
+                    "RNNTanh": "DynamicQuantizedRNNCell",
+                    "RNNReLU": "DynamicQuantizedRNNCell",
+                }
 
                 self.assertTrue(mod_repr_map[module_type] in str(model_quantized))
-                self.checkDynamicQuantizedModule(model_quantized.mod, mod_type_map[module_type], dtype)
+                self.checkDynamicQuantizedModule(
+                    model_quantized.mod, mod_type_map[module_type], dtype
+                )
                 self.checkNoQconfig(model)
 
             # Smoke test extra reprs
             checkQuantized(model_quantized, module_type)
             self.checkScriptable(model_quantized, [[x]], check_save_load=True)
-
 
     def test_forward_hooks_preserved(self):
         r"""Test post-training dynamic quantization on preserving
@@ -1082,22 +1242,24 @@ class TestPostTrainingDynamic(QuantizationTestCase):
         """
         for dtype in [torch.qint8, torch.float16]:
             model = SingleLayerLinearDynamicModel().eval()
-            qconfig = float16_dynamic_qconfig if dtype == torch.float16 else default_dynamic_qconfig
-            qconfig_dict = {
-                'fc1': qconfig
-            }
+            qconfig = (
+                float16_dynamic_qconfig
+                if dtype == torch.float16
+                else default_dynamic_qconfig
+            )
+            qconfig_dict = {"fc1": qconfig}
             convert_dynamic(model)
 
             counter = {
-                'pre_forwards': 0,
-                'forwards': 0,
+                "pre_forwards": 0,
+                "forwards": 0,
             }
 
             def fw_pre_hook(h_module, input):
-                counter['pre_forwards'] += 1
+                counter["pre_forwards"] += 1
 
             def fw_hook(h_module, input, output):
-                counter['forwards'] += 1
+                counter["forwards"] += 1
 
             model.fc1.register_forward_pre_hook(fw_pre_hook)
             model.fc1.register_forward_hook(fw_hook)
@@ -1106,16 +1268,21 @@ class TestPostTrainingDynamic(QuantizationTestCase):
             def checkHooksIsPresent(model):
                 self.assertObjectIn(fw_pre_hook, model.fc1._forward_pre_hooks.values())
                 self.assertObjectIn(fw_hook, model.fc1._forward_hooks.values())
-                self.assertEqual(len(model.fc1._forward_pre_hooks.values()), 1,
-                                 "Extra pre forward hooks have appeared on a layer")
-                self.assertEqual(len(model.fc1._forward_hooks.values()), 1,
-                                 "Extra post forward hooks have appeared on a layer")
+                self.assertEqual(
+                    len(model.fc1._forward_pre_hooks.values()),
+                    1,
+                    "Extra pre forward hooks have appeared on a layer",
+                )
+                self.assertEqual(
+                    len(model.fc1._forward_hooks.values()),
+                    1,
+                    "Extra post forward hooks have appeared on a layer",
+                )
 
             checkHooksIsPresent(model)
             test_only_eval_fn(model, self.calib_data)
             convert_dynamic(model)
             checkHooksIsPresent(model)
-
 
 
 class TestQuantizationAwareTraining(QuantizationTestCase):
@@ -1137,8 +1304,9 @@ class TestQuantizationAwareTraining(QuantizationTestCase):
 
                 checkQuantized(model)
 
-                model = quantize_qat(ManualLinearQATModel(qengine), test_only_train_fn,
-                                     [self.train_data])
+                model = quantize_qat(
+                    ManualLinearQATModel(qengine), test_only_train_fn, [self.train_data]
+                )
                 checkQuantized(model)
 
     def test_eval_only_fake_quant(self):
@@ -1178,7 +1346,9 @@ class TestQuantizationAwareTraining(QuantizationTestCase):
                 checkQuantized(model)
 
                 model = ManualConvLinearQATModel()
-                model = quantize_qat(model, test_only_train_fn, [self.img_data_2d_train])
+                model = quantize_qat(
+                    model, test_only_train_fn, [self.img_data_2d_train]
+                )
                 checkQuantized(model)
 
     def test_train_save_load_eval(self):
@@ -1226,7 +1396,9 @@ class TestQuantizationAwareTraining(QuantizationTestCase):
                 model.qconfig = torch.quantization.get_default_qconfig(qengine)
                 torch.quantization.prepare(model, inplace=True)
                 torch.quantization.convert(model, inplace=True)
-                self.assertEqual(set(model.state_dict().keys()), set(quant_state_dict.keys()))
+                self.assertEqual(
+                    set(model.state_dict().keys()), set(quant_state_dict.keys())
+                )
                 model.eval()
                 model.load_state_dict(quant_state_dict)
                 out = model(x)
@@ -1234,20 +1406,19 @@ class TestQuantizationAwareTraining(QuantizationTestCase):
 
     @override_qengines
     def test_forward_hooks_preserved(self):
-        r"""Test QAT on preserving pre forward and post forward hooks of original model
-        """
+        r"""Test QAT on preserving pre forward and post forward hooks of original model"""
         qengine = torch.backends.quantized.engine
         model = QuantStubModel()
         counter = {
-            'pre_forwards': 0,
-            'forwards': 0,
+            "pre_forwards": 0,
+            "forwards": 0,
         }
 
         def fw_pre_hook(h_module, input):
-            counter['pre_forwards'] += 1
+            counter["pre_forwards"] += 1
 
         def fw_hook(h_module, input, output):
-            counter['forwards'] += 1
+            counter["forwards"] += 1
 
         model.fc.register_forward_pre_hook(fw_pre_hook)
         model.fc.register_forward_hook(fw_hook)
@@ -1258,15 +1429,24 @@ class TestQuantizationAwareTraining(QuantizationTestCase):
         def checkHooksIsPresent(model, before_convert=True):
             forward_hooks = 1
             if before_convert:
-                self.assertEqual(len(model.quant._forward_hooks.values()), 1,
-                                 "Quantization observer hook has disappeared")
+                self.assertEqual(
+                    len(model.quant._forward_hooks.values()),
+                    1,
+                    "Quantization observer hook has disappeared",
+                )
                 forward_hooks = 2
             self.assertObjectIn(fw_pre_hook, model.fc._forward_pre_hooks.values())
             self.assertObjectIn(fw_hook, model.fc._forward_hooks.values())
-            self.assertEqual(len(model.fc._forward_pre_hooks.values()), 1,
-                             "Extra pre forward hooks have appeared on a layer")
-            self.assertEqual(len(model.fc._forward_hooks.values()), forward_hooks,
-                             "Extra post forward hooks have appeared on a layer")
+            self.assertEqual(
+                len(model.fc._forward_pre_hooks.values()),
+                1,
+                "Extra pre forward hooks have appeared on a layer",
+            )
+            self.assertEqual(
+                len(model.fc._forward_hooks.values()),
+                forward_hooks,
+                "Extra post forward hooks have appeared on a layer",
+            )
 
         checkHooksIsPresent(model, True)
         x = torch.rand(2, 5, dtype=torch.float)
@@ -1319,11 +1499,13 @@ class TestQuantizationAwareTraining(QuantizationTestCase):
 
 class TestEagerModeOps(QuantizationTestCase):
     def _test_activation_op_impl(
-            self, float_module_class, quantized_module_class, extra_module_kwargs):
-        """ Implementation for testing common activation ops like leaky relu
+        self, float_module_class, quantized_module_class, extra_module_kwargs
+    ):
+        """Implementation for testing common activation ops like leaky relu
         Args:
             extra_module_kwargs: keyword args to instantiate the float module
         """
+
         class M(torch.nn.Module):
             def __init__(self):
                 super().__init__()
@@ -1345,10 +1527,12 @@ class TestEagerModeOps(QuantizationTestCase):
         self.assertEqual(type(m.activation_op), quantized_module_class)
 
     def test_leaky_relu(self):
-        self._test_activation_op_impl(nn.LeakyReLU, nnq.LeakyReLU, {'negative_slope': 0.1, 'inplace': False})
+        self._test_activation_op_impl(
+            nn.LeakyReLU, nnq.LeakyReLU, {"negative_slope": 0.1, "inplace": False}
+        )
 
     def test_relu(self):
-        self._test_activation_op_impl(nn.ReLU, nn.ReLU, {'inplace': False})
+        self._test_activation_op_impl(nn.ReLU, nn.ReLU, {"inplace": False})
 
 
 class TestEagerModeQATOps(QuantizationTestCase):
@@ -1395,24 +1579,26 @@ class TestEagerModeQATOps(QuantizationTestCase):
         m = M().train()
         m.qconfig = default_qat_qconfig
         m = prepare_qat(m)
-        for attr in ['sigmoid', 'hardsigmoid', 'tanh']:
-            self.assertEqual(type(getattr(m, attr).activation_post_process), FixedQParamsFakeQuantize)
+        for attr in ["sigmoid", "hardsigmoid", "tanh"]:
+            self.assertEqual(
+                type(getattr(m, attr).activation_post_process), FixedQParamsFakeQuantize
+            )
         data = torch.randn(1, 3, 2, 4)
         before_convert = m(data)
         m = convert(m)
         after_convert = m(data)
         self.assertEqual(before_convert, after_convert)
         # make sure activation post process is removed
-        for attr in ['sigmoid', 'hardsigmoid', 'tanh']:
+        for attr in ["sigmoid", "hardsigmoid", "tanh"]:
             # verify fake quant module is removd
-            self.assertFalse(hasattr(getattr(m, attr), 'activation_post_process'))
+            self.assertFalse(hasattr(getattr(m, attr), "activation_post_process"))
             # verify that hooks are removed
             self.assertTrue(len(getattr(m, attr)._forward_hooks.items()) == 0)
 
         # make sure no fake quantize module is inserted for eval mode
 
         def checkNoFQModule(m):
-            for attr in ['sigmoid', 'hardsigmoid', 'tanh']:
+            for attr in ["sigmoid", "hardsigmoid", "tanh"]:
                 self.assertFalse(hasattr(getattr(m, attr), "activation_post_process"))
                 self.assertTrue(len(getattr(m, attr)._forward_hooks.items()) == 0)
 
@@ -1446,6 +1632,7 @@ class TestEagerModeQATOps(QuantizationTestCase):
         # make sure ReLU module is not changed
         self.assertTrue(type(m.relu), nn.ReLU)
 
+
 class TestFunctionalModule(QuantizationTestCase):
     # Histogram Observers are slow, so have no-deadline to ensure test doesn't time out
     @given(train_mode=st.booleans())
@@ -1455,10 +1642,10 @@ class TestFunctionalModule(QuantizationTestCase):
         xq = torch.quantize_per_tensor(x, 0.01, 30, torch.quint8)
         self.checkScriptable(model, [[x]], check_save_load=True)
         if train_mode:
-            model.qconfig = torch.quantization.get_default_qat_qconfig('fbgemm')
+            model.qconfig = torch.quantization.get_default_qat_qconfig("fbgemm")
             model = prepare_qat(model)
         else:
-            model.qconfig = torch.quantization.get_default_qconfig('qnnpack')
+            model.qconfig = torch.quantization.get_default_qconfig("qnnpack")
             model = prepare(model)
         # Check if observers and quant/dequant nodes are inserted
         self.checkNoPrepModules(model)
@@ -1477,28 +1664,44 @@ class TestFunctionalModule(QuantizationTestCase):
         checkQuantized(model)
         self.checkScriptable(model, [[xq]], check_save_load=True)
 
+
 @skipIfNoFBGEMM
 class TestFusion(QuantizationTestCase):
     def test_fuse_module_train(self):
         model = ModelForFusion(default_qat_qconfig).train()
         # Test step by step fusion
-        model = fuse_modules(model, ['conv1', 'bn1', 'relu1'])
-        model = fuse_modules(model, ['sub1.conv', 'sub1.bn'])
-        self.assertEqual(type(model.conv1), nni.ConvBnReLU2d,
-                         msg="Fused Conv + BN + Relu first layer")
-        self.assertEqual(type(model.bn1), torch.nn.Identity,
-                         msg="Fused Conv + BN + Relu (skipped BN)")
-        self.assertEqual(type(model.relu1), torch.nn.Identity,
-                         msg="Fused Conv + BN + Relu (skipped Relu)")
+        model = fuse_modules(model, ["conv1", "bn1", "relu1"])
+        model = fuse_modules(model, ["sub1.conv", "sub1.bn"])
+        self.assertEqual(
+            type(model.conv1),
+            nni.ConvBnReLU2d,
+            msg="Fused Conv + BN + Relu first layer",
+        )
+        self.assertEqual(
+            type(model.bn1),
+            torch.nn.Identity,
+            msg="Fused Conv + BN + Relu (skipped BN)",
+        )
+        self.assertEqual(
+            type(model.relu1),
+            torch.nn.Identity,
+            msg="Fused Conv + BN + Relu (skipped Relu)",
+        )
 
-        self.assertEqual(type(model.sub1.conv), nni.ConvBn2d,
-                         msg="Fused submodule Conv + BN")
-        self.assertEqual(type(model.sub1.bn), torch.nn.Identity,
-                         msg="Fused submodule Conv + BN (skipped BN)")
-        self.assertEqual(type(model.sub2.conv), torch.nn.Conv2d,
-                         msg="Non-fused submodule Conv")
-        self.assertEqual(type(model.sub2.relu), torch.nn.ReLU,
-                         msg="Non-fused submodule ReLU")
+        self.assertEqual(
+            type(model.sub1.conv), nni.ConvBn2d, msg="Fused submodule Conv + BN"
+        )
+        self.assertEqual(
+            type(model.sub1.bn),
+            torch.nn.Identity,
+            msg="Fused submodule Conv + BN (skipped BN)",
+        )
+        self.assertEqual(
+            type(model.sub2.conv), torch.nn.Conv2d, msg="Non-fused submodule Conv"
+        )
+        self.assertEqual(
+            type(model.sub2.relu), torch.nn.ReLU, msg="Non-fused submodule ReLU"
+        )
         model = prepare_qat(model)
         self.checkObservers(model)
 
@@ -1526,65 +1729,121 @@ class TestFusion(QuantizationTestCase):
             test_only_eval_fn(model, self.img_data_1d)
             self.checkNoQconfig(model)
 
-        with self.assertRaisesRegex(RuntimeError, "Could not run 'aten::native_batch_norm' with arguments from the 'QuantizedCPU'"):
+        with self.assertRaisesRegex(
+            RuntimeError,
+            "Could not run 'aten::native_batch_norm' with arguments from the 'QuantizedCPU'",
+        ):
             checkQuantized(model)
 
         model = ModelForFusion(default_qat_qconfig).train()
-        model = fuse_modules(model, [['conv1', 'bn1', 'relu1'],
-                             ['sub1.conv', 'sub1.bn']])
+        model = fuse_modules(
+            model, [["conv1", "bn1", "relu1"], ["sub1.conv", "sub1.bn"]]
+        )
         model = quantize_qat(model, test_only_train_fn, [self.img_data_1d_train])
-        with self.assertRaisesRegex(RuntimeError, "Could not run 'aten::native_batch_norm' with arguments from the 'QuantizedCPU'"):
+        with self.assertRaisesRegex(
+            RuntimeError,
+            "Could not run 'aten::native_batch_norm' with arguments from the 'QuantizedCPU'",
+        ):
             checkQuantized(model)
-
 
     def test_fuse_module_eval(self):
         model = ModelForFusion(default_qconfig)
         model.eval()
-        model = fuse_modules(model, [['conv3', 'bn3', 'relu4'],
-                             ['conv1', 'bn1', 'relu1'],
-                             ['conv2', 'relu2'],
-                             ['bn2', 'relu3'],
-                             ['sub1.conv', 'sub1.bn']])
-        self.assertEqual(type(model.conv1), nni.ConvReLU2d,
-                         msg="Fused Conv + BN + Relu first layer (BN is folded)")
-        self.assertEqual(type(model.conv1[0]), nn.Conv2d,
-                         msg="Fused Conv + BN + Relu (Conv + folded BN only)")
-        self.assertEqual(type(model.conv1[1]), nn.ReLU,
-                         msg="Fused Conv + BN + Relu second layer (Relu only)")
-        self.assertEqual(type(model.bn1), nn.Identity,
-                         msg="Fused Conv + BN + Relu second layer (Skipped BN)")
-        self.assertEqual(type(model.relu1), nn.Identity,
-                         msg="Fused Conv + BN + Relu second layer (Skipped Relu)")
-        self.assertEqual(type(model.conv2), nni.ConvReLU3d,
-                         msg="Fused Conv + BN + Relu first layer (BN is folded)")
-        self.assertEqual(type(model.bn2), nni.BNReLU3d,
-                         msg="Fused BN + Relu first layer (Relu is folded))")
-        self.assertEqual(type(model.relu3), nn.Identity,
-                         msg="Fused BN + Relu second layer (Skipped Relu)")
-        self.assertEqual(type(model.conv2[0]), nn.Conv3d,
-                         msg="Fused Conv + BN + Relu (Conv + folded BN only)")
-        self.assertEqual(type(model.conv2[1]), nn.ReLU,
-                         msg="Fused Conv + BN + Relu second layer (Relu only)")
-        self.assertEqual(type(model.relu2), nn.Identity,
-                         msg="Fused Conv + BN + Relu second layer (Skipped Relu)")
+        model = fuse_modules(
+            model,
+            [
+                ["conv3", "bn3", "relu4"],
+                ["conv1", "bn1", "relu1"],
+                ["conv2", "relu2"],
+                ["bn2", "relu3"],
+                ["sub1.conv", "sub1.bn"],
+            ],
+        )
+        self.assertEqual(
+            type(model.conv1),
+            nni.ConvReLU2d,
+            msg="Fused Conv + BN + Relu first layer (BN is folded)",
+        )
+        self.assertEqual(
+            type(model.conv1[0]),
+            nn.Conv2d,
+            msg="Fused Conv + BN + Relu (Conv + folded BN only)",
+        )
+        self.assertEqual(
+            type(model.conv1[1]),
+            nn.ReLU,
+            msg="Fused Conv + BN + Relu second layer (Relu only)",
+        )
+        self.assertEqual(
+            type(model.bn1),
+            nn.Identity,
+            msg="Fused Conv + BN + Relu second layer (Skipped BN)",
+        )
+        self.assertEqual(
+            type(model.relu1),
+            nn.Identity,
+            msg="Fused Conv + BN + Relu second layer (Skipped Relu)",
+        )
+        self.assertEqual(
+            type(model.conv2),
+            nni.ConvReLU3d,
+            msg="Fused Conv + BN + Relu first layer (BN is folded)",
+        )
+        self.assertEqual(
+            type(model.bn2),
+            nni.BNReLU3d,
+            msg="Fused BN + Relu first layer (Relu is folded))",
+        )
+        self.assertEqual(
+            type(model.relu3),
+            nn.Identity,
+            msg="Fused BN + Relu second layer (Skipped Relu)",
+        )
+        self.assertEqual(
+            type(model.conv2[0]),
+            nn.Conv3d,
+            msg="Fused Conv + BN + Relu (Conv + folded BN only)",
+        )
+        self.assertEqual(
+            type(model.conv2[1]),
+            nn.ReLU,
+            msg="Fused Conv + BN + Relu second layer (Relu only)",
+        )
+        self.assertEqual(
+            type(model.relu2),
+            nn.Identity,
+            msg="Fused Conv + BN + Relu second layer (Skipped Relu)",
+        )
 
-        self.assertEqual(type(model.conv3), nni.ConvReLU1d,
-                         msg="Fused Conv + Relu for Conv1d (folded BN)")
-        self.assertEqual(type(model.conv3[0]), nn.Conv1d,
-                         msg="Fused Conv + Relu for Conv1d ")
-        self.assertEqual(type(model.conv3[1]), nn.ReLU,
-                         msg="Fused Conv + Relu for Conv1d")
-        self.assertEqual(type(model.bn3), nn.Identity,
-                         msg="Fused Conv + BN + Relu for Conv1d (Skipped BN)")
+        self.assertEqual(
+            type(model.conv3),
+            nni.ConvReLU1d,
+            msg="Fused Conv + Relu for Conv1d (folded BN)",
+        )
+        self.assertEqual(
+            type(model.conv3[0]), nn.Conv1d, msg="Fused Conv + Relu for Conv1d "
+        )
+        self.assertEqual(
+            type(model.conv3[1]), nn.ReLU, msg="Fused Conv + Relu for Conv1d"
+        )
+        self.assertEqual(
+            type(model.bn3),
+            nn.Identity,
+            msg="Fused Conv + BN + Relu for Conv1d (Skipped BN)",
+        )
 
-        self.assertEqual(type(model.sub1.conv), nn.Conv2d,
-                         msg="Fused submodule Conv + folded BN")
-        self.assertEqual(type(model.sub1.bn), nn.Identity,
-                         msg="Fused submodule (skipped BN)")
-        self.assertEqual(type(model.sub2.conv), nn.Conv2d,
-                         msg="Non-fused submodule Conv")
-        self.assertEqual(type(model.sub2.relu), torch.nn.ReLU,
-                         msg="Non-fused submodule ReLU")
+        self.assertEqual(
+            type(model.sub1.conv), nn.Conv2d, msg="Fused submodule Conv + folded BN"
+        )
+        self.assertEqual(
+            type(model.sub1.bn), nn.Identity, msg="Fused submodule (skipped BN)"
+        )
+        self.assertEqual(
+            type(model.sub2.conv), nn.Conv2d, msg="Non-fused submodule Conv"
+        )
+        self.assertEqual(
+            type(model.sub2.relu), torch.nn.ReLU, msg="Non-fused submodule ReLU"
+        )
 
         model = prepare(model)
         self.checkObservers(model)
@@ -1607,11 +1866,16 @@ class TestFusion(QuantizationTestCase):
         checkQuantized(model)
 
         model = ModelForFusion(default_qconfig).eval()
-        model = fuse_modules(model, [['conv1', 'bn1', 'relu1'],
-                             ['conv2', 'relu2'],
-                             ['bn2', 'relu3'],
-                             ['sub1.conv', 'sub1.bn'],
-                             ['conv3', 'bn3', 'relu4']])
+        model = fuse_modules(
+            model,
+            [
+                ["conv1", "bn1", "relu1"],
+                ["conv2", "relu2"],
+                ["bn2", "relu3"],
+                ["sub1.conv", "sub1.bn"],
+                ["conv3", "bn3", "relu4"],
+            ],
+        )
         model = quantize(model, test_only_eval_fn, [self.img_data_1d])
         checkQuantized(model)
 
@@ -1620,26 +1884,47 @@ class TestFusion(QuantizationTestCase):
             with override_quantized_engine(qengine):
                 model = ModelWithSequentialFusion().train()
                 model.to(torch.float)
-                fuse_modules(model, [['conv1', 'relu1'] ,
-                                     ['features.0.0', 'features.0.1', 'features.0.2'],
-                                     ['features.1.0', 'features.1.1', 'features.1.2'],
-                                     ['features.2.0', 'features.2.1', 'features.2.2'],
-                                     ['classifier.0', 'classifier.1']], inplace=True)
-                self.assertEqual(type(model.conv1), nni.ConvReLU2d,
-                                 msg="Fused Conv + Relu: nni.ConvReLU2d")
-                self.assertEqual(type(model.conv1[0]), nn.Conv2d,
-                                 msg="Fused Conv + Relu: Conv2d")
-                self.assertEqual(type(model.conv1[1]), nn.ReLU,
-                                 msg="Fused Conv + Relu: Relu")
-                self.assertEqual(type(model.relu1), nn.Identity,
-                                 msg="Fused Conv + Relu: Identity")
+                fuse_modules(
+                    model,
+                    [
+                        ["conv1", "relu1"],
+                        ["features.0.0", "features.0.1", "features.0.2"],
+                        ["features.1.0", "features.1.1", "features.1.2"],
+                        ["features.2.0", "features.2.1", "features.2.2"],
+                        ["classifier.0", "classifier.1"],
+                    ],
+                    inplace=True,
+                )
+                self.assertEqual(
+                    type(model.conv1),
+                    nni.ConvReLU2d,
+                    msg="Fused Conv + Relu: nni.ConvReLU2d",
+                )
+                self.assertEqual(
+                    type(model.conv1[0]), nn.Conv2d, msg="Fused Conv + Relu: Conv2d"
+                )
+                self.assertEqual(
+                    type(model.conv1[1]), nn.ReLU, msg="Fused Conv + Relu: Relu"
+                )
+                self.assertEqual(
+                    type(model.relu1), nn.Identity, msg="Fused Conv + Relu: Identity"
+                )
                 for i in range(3):
-                    self.assertEqual(type(model.features[i][0]), nni.ConvBnReLU2d,
-                                     msg="Fused submodule Conv + folded BN")
-                    self.assertEqual(type(model.features[i][1]), nn.Identity,
-                                     msg="Fused submodule (skipped BN)")
-                    self.assertEqual(type(model.features[i][2]), nn.Identity,
-                                     msg="Non-fused submodule Conv")
+                    self.assertEqual(
+                        type(model.features[i][0]),
+                        nni.ConvBnReLU2d,
+                        msg="Fused submodule Conv + folded BN",
+                    )
+                    self.assertEqual(
+                        type(model.features[i][1]),
+                        nn.Identity,
+                        msg="Fused submodule (skipped BN)",
+                    )
+                    self.assertEqual(
+                        type(model.features[i][2]),
+                        nn.Identity,
+                        msg="Non-fused submodule Conv",
+                    )
                 self.assertEqual(type(model.classifier[0]), nni.LinearReLU)
                 self.assertEqual(type(model.classifier[1]), nn.Identity)
                 model.qconfig = torch.quantization.get_default_qat_qconfig(qengine)
@@ -1647,17 +1932,26 @@ class TestFusion(QuantizationTestCase):
                 self.checkObservers(model)
                 model(self.img_data_2d[0][0])
 
-
                 def checkQAT(model):
                     self.assertEqual(type(model.conv1), nniqat.ConvReLU2d)
                     self.assertEqual(type(model.relu1), nn.Identity)
+
                 for i in range(3):
-                    self.assertEqual(type(model.features[i][0]), nniqat.ConvBnReLU2d,
-                                     msg="Fused submodule Conv + folded BN")
-                    self.assertEqual(type(model.features[i][1]), nn.Identity,
-                                     msg="Fused submodule (skipped BN)")
-                    self.assertEqual(type(model.features[i][2]), nn.Identity,
-                                     msg="Non-fused submodule Conv")
+                    self.assertEqual(
+                        type(model.features[i][0]),
+                        nniqat.ConvBnReLU2d,
+                        msg="Fused submodule Conv + folded BN",
+                    )
+                    self.assertEqual(
+                        type(model.features[i][1]),
+                        nn.Identity,
+                        msg="Fused submodule (skipped BN)",
+                    )
+                    self.assertEqual(
+                        type(model.features[i][2]),
+                        nn.Identity,
+                        msg="Non-fused submodule Conv",
+                    )
                 self.assertEqual(type(model.classifier[0]), nniqat.LinearReLU)
                 self.assertEqual(type(model.classifier[1]), nn.Identity)
 
@@ -1672,26 +1966,47 @@ class TestFusion(QuantizationTestCase):
             with override_quantized_engine(qengine):
                 model = ModelWithSequentialFusion().eval()
                 model.to(torch.float)
-                fuse_modules(model, [['conv1', 'relu1'] ,
-                                     ['features.0.0', 'features.0.1', 'features.0.2'],
-                                     ['features.1.0', 'features.1.1', 'features.1.2'],
-                                     ['features.2.0', 'features.2.1', 'features.2.2'],
-                                     ['classifier.0', 'classifier.1']], inplace=True)
-                self.assertEqual(type(model.conv1), nni.ConvReLU2d,
-                                 msg="Fused Conv + Relu: nni.ConvReLU2d")
-                self.assertEqual(type(model.conv1[0]), nn.Conv2d,
-                                 msg="Fused Conv + Relu: Conv2d")
-                self.assertEqual(type(model.conv1[1]), nn.ReLU,
-                                 msg="Fused Conv + Relu: Relu")
-                self.assertEqual(type(model.relu1), nn.Identity,
-                                 msg="Fused Conv + Relu: Identity")
+                fuse_modules(
+                    model,
+                    [
+                        ["conv1", "relu1"],
+                        ["features.0.0", "features.0.1", "features.0.2"],
+                        ["features.1.0", "features.1.1", "features.1.2"],
+                        ["features.2.0", "features.2.1", "features.2.2"],
+                        ["classifier.0", "classifier.1"],
+                    ],
+                    inplace=True,
+                )
+                self.assertEqual(
+                    type(model.conv1),
+                    nni.ConvReLU2d,
+                    msg="Fused Conv + Relu: nni.ConvReLU2d",
+                )
+                self.assertEqual(
+                    type(model.conv1[0]), nn.Conv2d, msg="Fused Conv + Relu: Conv2d"
+                )
+                self.assertEqual(
+                    type(model.conv1[1]), nn.ReLU, msg="Fused Conv + Relu: Relu"
+                )
+                self.assertEqual(
+                    type(model.relu1), nn.Identity, msg="Fused Conv + Relu: Identity"
+                )
                 for i in range(3):
-                    self.assertEqual(type(model.features[i][0]), nni.ConvReLU2d,
-                                     msg="Fused submodule Conv + folded BN")
-                    self.assertEqual(type(model.features[i][1]), nn.Identity,
-                                     msg="Fused submodule (skipped BN)")
-                    self.assertEqual(type(model.features[i][2]), nn.Identity,
-                                     msg="Non-fused submodule Conv")
+                    self.assertEqual(
+                        type(model.features[i][0]),
+                        nni.ConvReLU2d,
+                        msg="Fused submodule Conv + folded BN",
+                    )
+                    self.assertEqual(
+                        type(model.features[i][1]),
+                        nn.Identity,
+                        msg="Fused submodule (skipped BN)",
+                    )
+                    self.assertEqual(
+                        type(model.features[i][2]),
+                        nn.Identity,
+                        msg="Non-fused submodule Conv",
+                    )
                 self.assertEqual(type(model.classifier[0]), nni.LinearReLU)
                 self.assertEqual(type(model.classifier[1]), nn.Identity)
                 model.qconfig = torch.quantization.get_default_qconfig(qengine)
@@ -1719,10 +2034,12 @@ class TestFusion(QuantizationTestCase):
                 # output with no fusion.
                 out_ref = model(self.img_data_2d[0][0])
 
-                model.qconfig = QConfig(activation=torch.nn.Identity,
-                                        weight=torch.nn.Identity)
-                model = fuse_modules(model, [["conv1", "bn1", "relu1"],
-                                             ["conv2", "bn2"]])
+                model.qconfig = QConfig(
+                    activation=torch.nn.Identity, weight=torch.nn.Identity
+                )
+                model = fuse_modules(
+                    model, [["conv1", "bn1", "relu1"], ["conv2", "bn2"]]
+                )
                 prep_model = prepare_qat(model, inplace=False)
                 # output with fusion but no observers.
                 out_fused = prep_model(self.img_data_2d[0][0])
@@ -1751,42 +2068,59 @@ class TestFusion(QuantizationTestCase):
         model = ModelForFusion(default_qat_qconfig).train()
 
         counter = {
-            'pre_forwards': 0,
-            'forwards': 0,
+            "pre_forwards": 0,
+            "forwards": 0,
         }
         fused = False
 
         def fw_pre_hook(fused_module_class, h_module, input):
             if fused:
-                self.assertEqual(type(h_module), fused_module_class,
-                                 "After fusion owner of the first module's forward pre hook is not a fused module")
-            counter['pre_forwards'] += 1
+                self.assertEqual(
+                    type(h_module),
+                    fused_module_class,
+                    "After fusion owner of the first module's forward pre hook is not a fused module",
+                )
+            counter["pre_forwards"] += 1
 
         def fw_hook(fused_module_class, h_module, input, output):
             if fused:
-                self.assertEqual(type(h_module), fused_module_class,
-                                 "After fusion owner of the last module's forward hook is not a fused module")
-            counter['forwards'] += 1
+                self.assertEqual(
+                    type(h_module),
+                    fused_module_class,
+                    "After fusion owner of the last module's forward hook is not a fused module",
+                )
+            counter["forwards"] += 1
 
         # Registering two pre and two post forward hooks, thus expecting counter increment by two each inference
-        model.conv1.register_forward_pre_hook(lambda *args: fw_pre_hook(nni.ConvBnReLU2d, *args))
-        model.sub1.conv.register_forward_pre_hook(lambda *args: fw_pre_hook(nni.ConvBn2d, *args))
-        model.relu1.register_forward_hook(lambda *args: fw_hook(nni.ConvBnReLU2d, *args))
+        model.conv1.register_forward_pre_hook(
+            lambda *args: fw_pre_hook(nni.ConvBnReLU2d, *args)
+        )
+        model.sub1.conv.register_forward_pre_hook(
+            lambda *args: fw_pre_hook(nni.ConvBn2d, *args)
+        )
+        model.relu1.register_forward_hook(
+            lambda *args: fw_hook(nni.ConvBnReLU2d, *args)
+        )
         model.sub1.bn.register_forward_hook(lambda *args: fw_hook(nni.ConvBn2d, *args))
 
         test_only_eval_fn(model, self.img_data_1d)
-        self.assertEqual(counter['pre_forwards'], 2 * len(self.img_data_1d))
-        self.assertEqual(counter['forwards'], 2 * len(self.img_data_1d))
+        self.assertEqual(counter["pre_forwards"], 2 * len(self.img_data_1d))
+        self.assertEqual(counter["forwards"], 2 * len(self.img_data_1d))
 
-        model = fuse_modules(model, ['conv1', 'bn1', 'relu1'])
-        model = fuse_modules(model, ['sub1.conv', 'sub1.bn'])
+        model = fuse_modules(model, ["conv1", "bn1", "relu1"])
+        model = fuse_modules(model, ["sub1.conv", "sub1.bn"])
 
         fused = True
-        before_fusion_pre_count = counter['pre_forwards']
-        before_fusion_post_count = counter['forwards']
+        before_fusion_pre_count = counter["pre_forwards"]
+        before_fusion_post_count = counter["forwards"]
         test_only_eval_fn(model, self.img_data_1d)
-        self.assertEqual(counter['pre_forwards'] - before_fusion_pre_count, 2 * len(self.img_data_1d))
-        self.assertEqual(counter['forwards'] - before_fusion_post_count, 2 * len(self.img_data_1d))
+        self.assertEqual(
+            counter["pre_forwards"] - before_fusion_pre_count, 2 * len(self.img_data_1d)
+        )
+        self.assertEqual(
+            counter["forwards"] - before_fusion_post_count, 2 * len(self.img_data_1d)
+        )
+
 
 class TestModelNumerics(QuantizationTestCase):
     def test_float_quant_compare_per_tensor(self):
@@ -1801,16 +2135,24 @@ class TestModelNumerics(QuantizationTestCase):
                 qModel = torch.quantization.QuantWrapper(my_model)
                 qModel.eval()
                 qModel.qconfig = torch.quantization.default_qconfig
-                torch.quantization.fuse_modules(qModel.module, [['conv1', 'bn1', 'relu1']], inplace=True)
+                torch.quantization.fuse_modules(
+                    qModel.module, [["conv1", "bn1", "relu1"]], inplace=True
+                )
                 torch.quantization.prepare(qModel, inplace=True)
                 qModel(calib_data)
                 torch.quantization.convert(qModel, inplace=True)
                 out_q = qModel(eval_data)
-                SQNRdB = 20 * torch.log10(torch.norm(out_ref) / torch.norm(out_ref - out_q))
+                SQNRdB = 20 * torch.log10(
+                    torch.norm(out_ref) / torch.norm(out_ref - out_q)
+                )
                 # Quantized model output should be close to floating point model output numerically
                 # Setting target SQNR to be 30 dB so that relative error is 1e-3 below the desired
                 # output
-                self.assertGreater(SQNRdB, 30, msg='Quantized model numerics diverge from float, expect SQNR > 30 dB')
+                self.assertGreater(
+                    SQNRdB,
+                    30,
+                    msg="Quantized model numerics diverge from float, expect SQNR > 30 dB",
+                )
 
     def test_float_quant_compare_per_channel(self):
         # Test for per-channel Quant
@@ -1823,7 +2165,9 @@ class TestModelNumerics(QuantizationTestCase):
         q_model = torch.quantization.QuantWrapper(my_model)
         q_model.eval()
         q_model.qconfig = torch.quantization.default_per_channel_qconfig
-        torch.quantization.fuse_modules(q_model.module, [['conv1', 'bn1', 'relu1']], inplace=True)
+        torch.quantization.fuse_modules(
+            q_model.module, [["conv1", "bn1", "relu1"]], inplace=True
+        )
         torch.quantization.prepare(q_model)
         q_model(calib_data)
         torch.quantization.convert(q_model)
@@ -1831,7 +2175,11 @@ class TestModelNumerics(QuantizationTestCase):
         SQNRdB = 20 * torch.log10(torch.norm(out_ref) / torch.norm(out_ref - out_q))
         # Quantized model output should be close to floating point model output numerically
         # Setting target SQNR to be 35 dB
-        self.assertGreater(SQNRdB, 35, msg='Quantized model numerics diverge from float, expect SQNR > 35 dB')
+        self.assertGreater(
+            SQNRdB,
+            35,
+            msg="Quantized model numerics diverge from float, expect SQNR > 35 dB",
+        )
 
     def test_fake_quant_true_quant_compare(self):
         for qengine in supported_qengines:
@@ -1845,7 +2193,9 @@ class TestModelNumerics(QuantizationTestCase):
                 fq_model = torch.quantization.QuantWrapper(my_model)
                 fq_model.train()
                 fq_model.qconfig = torch.quantization.default_qat_qconfig
-                torch.quantization.fuse_modules(fq_model.module, [['conv1', 'bn1', 'relu1']], inplace=True)
+                torch.quantization.fuse_modules(
+                    fq_model.module, [["conv1", "bn1", "relu1"]], inplace=True
+                )
                 torch.quantization.prepare_qat(fq_model)
                 fq_model.eval()
                 fq_model.apply(torch.quantization.disable_fake_quant)
@@ -1854,14 +2204,26 @@ class TestModelNumerics(QuantizationTestCase):
                 fq_model.apply(torch.quantization.enable_fake_quant)
                 fq_model.apply(torch.quantization.disable_observer)
                 out_fq = fq_model(eval_data)
-                SQNRdB = 20 * torch.log10(torch.norm(out_ref) / torch.norm(out_ref - out_fq))
+                SQNRdB = 20 * torch.log10(
+                    torch.norm(out_ref) / torch.norm(out_ref - out_fq)
+                )
                 # Quantized model output should be close to floating point model output numerically
                 # Setting target SQNR to be 35 dB
-                self.assertGreater(SQNRdB, 35, msg='Quantized model numerics diverge from float, expect SQNR > 35 dB')
+                self.assertGreater(
+                    SQNRdB,
+                    35,
+                    msg="Quantized model numerics diverge from float, expect SQNR > 35 dB",
+                )
                 torch.quantization.convert(fq_model)
                 out_q = fq_model(eval_data)
-                SQNRdB = 20 * torch.log10(torch.norm(out_fq) / (torch.norm(out_fq - out_q) + 1e-10))
-                self.assertGreater(SQNRdB, 60, msg='Fake quant and true quant numerics diverge, expect SQNR > 60 dB')
+                SQNRdB = 20 * torch.log10(
+                    torch.norm(out_fq) / (torch.norm(out_fq - out_q) + 1e-10)
+                )
+                self.assertGreater(
+                    SQNRdB,
+                    60,
+                    msg="Fake quant and true quant numerics diverge, expect SQNR > 60 dB",
+                )
 
     # Test to compare weight only quantized model numerics and
     # activation only quantized model numerics with float
@@ -1871,8 +2233,12 @@ class TestModelNumerics(QuantizationTestCase):
                 torch.manual_seed(67)
                 calib_data = torch.rand(2048, 3, 15, 15, dtype=torch.float32)
                 eval_data = torch.rand(10, 3, 15, 15, dtype=torch.float32)
-                qconfigset = set([torch.quantization.default_weight_only_qconfig,
-                                  torch.quantization.default_activation_only_qconfig])
+                qconfigset = set(
+                    [
+                        torch.quantization.default_weight_only_qconfig,
+                        torch.quantization.default_activation_only_qconfig,
+                    ]
+                )
                 SQNRTarget = [35, 45]
                 for idx, qconfig in enumerate(qconfigset):
                     my_model = ModelMultipleOpsNoAvgPool().to(torch.float32)
@@ -1881,7 +2247,9 @@ class TestModelNumerics(QuantizationTestCase):
                     fq_model = torch.quantization.QuantWrapper(my_model)
                     fq_model.train()
                     fq_model.qconfig = qconfig
-                    torch.quantization.fuse_modules(fq_model.module, [['conv1', 'bn1', 'relu1']], inplace=True)
+                    torch.quantization.fuse_modules(
+                        fq_model.module, [["conv1", "bn1", "relu1"]], inplace=True
+                    )
                     torch.quantization.prepare_qat(fq_model)
                     fq_model.eval()
                     fq_model.apply(torch.quantization.disable_fake_quant)
@@ -1890,8 +2258,15 @@ class TestModelNumerics(QuantizationTestCase):
                     fq_model.apply(torch.quantization.enable_fake_quant)
                     fq_model.apply(torch.quantization.disable_observer)
                     out_fq = fq_model(eval_data)
-                    SQNRdB = 20 * torch.log10(torch.norm(out_ref) / torch.norm(out_ref - out_fq))
-                    self.assertGreater(SQNRdB, SQNRTarget[idx], msg='Quantized model numerics diverge from float')
+                    SQNRdB = 20 * torch.log10(
+                        torch.norm(out_ref) / torch.norm(out_ref - out_fq)
+                    )
+                    self.assertGreater(
+                        SQNRdB,
+                        SQNRTarget[idx],
+                        msg="Quantized model numerics diverge from float",
+                    )
+
 
 class TestQuantizeONNXExport(JitTestCase):
     def _test_lower_graph_impl(self, model, data):
@@ -1912,29 +2287,44 @@ class TestQuantizeONNXExport(JitTestCase):
 
             model = torch.jit.load(buf)
             f = io.BytesIO()
-            torch.onnx.export(model, input, f, input_names=input_names, example_outputs=outputs,
-                              operator_export_type=torch.onnx.OperatorExportTypes.ONNX_ATEN_FALLBACK)
+            torch.onnx.export(
+                model,
+                input,
+                f,
+                input_names=input_names,
+                example_outputs=outputs,
+                operator_export_type=torch.onnx.OperatorExportTypes.ONNX_ATEN_FALLBACK,
+            )
+
         onnx_model = export_to_onnx(model, data, input_names)
 
     @skipIfNoFBGEMM
     def test_lower_graph_linear(self):
-        model = torch.quantization.QuantWrapper(torch.nn.Linear(5, 10, bias=True)).to(dtype=torch.float)
+        model = torch.quantization.QuantWrapper(torch.nn.Linear(5, 10, bias=True)).to(
+            dtype=torch.float
+        )
         data_numpy = np.random.rand(1, 2, 5).astype(np.float32)
         data = torch.from_numpy(data_numpy).to(dtype=torch.float)
         self._test_lower_graph_impl(model, data)
 
     @skipIfNoFBGEMM
     def test_lower_graph_conv2d(self):
-        model = torch.quantization.QuantWrapper(torch.nn.Conv2d(3, 5, 2, bias=True)).to(dtype=torch.float)
+        model = torch.quantization.QuantWrapper(torch.nn.Conv2d(3, 5, 2, bias=True)).to(
+            dtype=torch.float
+        )
         data_numpy = np.random.rand(1, 3, 6, 6).astype(np.float32)
         data = torch.from_numpy(data_numpy).to(dtype=torch.float)
         self._test_lower_graph_impl(model, data)
 
     @skipIfNoFBGEMM
-    @unittest.skip("onnx opset9 does not support quantize_per_tensor and caffe2 \
-    does not support conv3d")
+    @unittest.skip(
+        "onnx opset9 does not support quantize_per_tensor and caffe2 \
+    does not support conv3d"
+    )
     def test_lower_graph_conv3d(self):
-        model = torch.quantization.QuantWrapper(torch.nn.Conv3d(3, 5, 2, bias=True)).to(dtype=torch.float)
+        model = torch.quantization.QuantWrapper(torch.nn.Conv3d(3, 5, 2, bias=True)).to(
+            dtype=torch.float
+        )
         data_numpy = np.random.rand(1, 3, 6, 6, 6).astype(np.float32)
         data = torch.from_numpy(data_numpy).to(dtype=torch.float)
         self._test_lower_graph_impl(model, data)
@@ -1968,31 +2358,29 @@ class TestDeprecatedJitQuantized(JitTestCase):
             # product that overflows the int16 range, e.g.
             # (255*127+255*127) = 64770. So, we hardcode the test values
             # here and ensure a mix of signedness.
-            vals = [[100, -155],
-                    [100, -155],
-                    [-155, 100],
-                    [-155, 100],
-                    [100, -155],
-                    [-155, 100],
-                    [-155, 100],
-                    [100, -155]]
-            vals = vals[:d_hid * num_chunks]
+            vals = [
+                [100, -155],
+                [100, -155],
+                [-155, 100],
+                [-155, 100],
+                [100, -155],
+                [-155, 100],
+                [-155, 100],
+                [100, -155],
+            ]
+            vals = vals[: d_hid * num_chunks]
             cell.weight_ih = torch.nn.Parameter(
-                torch.tensor(vals, dtype=torch.float),
-                requires_grad=False)
+                torch.tensor(vals, dtype=torch.float), requires_grad=False
+            )
             cell.weight_hh = torch.nn.Parameter(
-                torch.tensor(vals, dtype=torch.float),
-                requires_grad=False)
+                torch.tensor(vals, dtype=torch.float), requires_grad=False
+            )
 
             ref = copy.deepcopy(cell)
 
             cell = torch.jit.quantized.quantize_rnn_cell_modules(cell)
-            x = torch.tensor([[100, -155],
-                              [-155, 100],
-                              [100, -155]], dtype=torch.float)
-            h0_vals = [[-155, 100],
-                       [-155, 155],
-                       [100, -155]]
+            x = torch.tensor([[100, -155], [-155, 100], [100, -155]], dtype=torch.float)
+            h0_vals = [[-155, 100], [-155, 155], [100, -155]]
             hx = torch.tensor(h0_vals, dtype=torch.float)
             if isinstance(cell, torch.jit.quantized.QuantizedLSTMCell):
                 cx = torch.tensor(h0_vals, dtype=torch.float)
@@ -2001,6 +2389,7 @@ class TestDeprecatedJitQuantized(JitTestCase):
                 hiddens = hx
 
             if isinstance(cell, torch.jit.quantized.QuantizedLSTMCell):
+
                 class ScriptWrapper(torch.jit.ScriptModule):
                     def __init__(self, cell):
                         super(ScriptWrapper, self).__init__()
@@ -2010,6 +2399,7 @@ class TestDeprecatedJitQuantized(JitTestCase):
                     def forward(self, x, hiddens):
                         # type: (torch.Tensor, Tuple[torch.Tensor, torch.Tensor]) -> Tuple[torch.Tensor, torch.Tensor]
                         return self.cell(x, hiddens)
+
             else:
 
                 class ScriptWrapper(torch.jit.ScriptModule):
@@ -2053,37 +2443,41 @@ class TestDeprecatedJitQuantized(JitTestCase):
             # product that overflows the int16 range, e.g.
             # (255*127+255*127) = 64770. So, we hardcode the test values
             # here and ensure a mix of signedness.
-            vals = [[100, -155],
-                    [100, -155],
-                    [-155, 100],
-                    [-155, 100],
-                    [100, -155],
-                    [-155, 100],
-                    [-155, 100],
-                    [100, -155]]
+            vals = [
+                [100, -155],
+                [100, -155],
+                [-155, 100],
+                [-155, 100],
+                [100, -155],
+                [-155, 100],
+                [-155, 100],
+                [100, -155],
+            ]
             if isinstance(cell, torch.nn.LSTM):
                 num_chunks = 4
             elif isinstance(cell, torch.nn.GRU):
                 num_chunks = 3
-            vals = vals[:d_hid * num_chunks]
+            vals = vals[: d_hid * num_chunks]
             cell.weight_ih_l0 = torch.nn.Parameter(
-                torch.tensor(vals, dtype=torch.float),
-                requires_grad=False)
+                torch.tensor(vals, dtype=torch.float), requires_grad=False
+            )
             cell.weight_hh_l0 = torch.nn.Parameter(
-                torch.tensor(vals, dtype=torch.float),
-                requires_grad=False)
+                torch.tensor(vals, dtype=torch.float), requires_grad=False
+            )
 
             ref = copy.deepcopy(cell)
             cell_int8 = torch.jit.quantized.quantize_rnn_modules(cell, dtype=torch.int8)
-            cell_fp16 = torch.jit.quantized.quantize_rnn_modules(cell, dtype=torch.float16)
+            cell_fp16 = torch.jit.quantized.quantize_rnn_modules(
+                cell, dtype=torch.float16
+            )
 
             niter = 10
-            x = torch.tensor([[100, -155],
-                              [-155, 100],
-                              [100, -155]], dtype=torch.float).unsqueeze(0).repeat(niter, 1, 1)
-            h0_vals = [[-155, 100],
-                       [-155, 155],
-                       [100, -155]]
+            x = (
+                torch.tensor([[100, -155], [-155, 100], [100, -155]], dtype=torch.float)
+                .unsqueeze(0)
+                .repeat(niter, 1, 1)
+            )
+            h0_vals = [[-155, 100], [-155, 155], [100, -155]]
             hx = torch.tensor(h0_vals, dtype=torch.float).unsqueeze(0)
             cx = torch.tensor(h0_vals, dtype=torch.float).unsqueeze(0)
 
@@ -2125,6 +2519,7 @@ class TestDeprecatedJitQuantized(JitTestCase):
                     torch.testing.assert_allclose(out, ref)
 
             if isinstance(cell, torch.jit.quantized.QuantizedGRU):
+
                 class ScriptWrapper(torch.jit.ScriptModule):
                     def __init__(self, cell):
                         super(ScriptWrapper, self).__init__()
@@ -2138,6 +2533,7 @@ class TestDeprecatedJitQuantized(JitTestCase):
                 compare_quantized_unquantized(ScriptWrapper, cell)
             elif isinstance(cell, torch.jit.quantized.QuantizedLSTM):
                 for cell in [cell_int8, cell_fp16]:
+
                     class ScriptWrapper(torch.jit.ScriptModule):
                         def __init__(self, cell):
                             super(ScriptWrapper, self).__init__()
@@ -2148,9 +2544,10 @@ class TestDeprecatedJitQuantized(JitTestCase):
                             # type: (torch.Tensor, Tuple[torch.Tensor, torch.Tensor])
                             #        -> Tuple[torch.Tensor, Tuple[torch.Tensor, torch.Tensor]]
                             return self.cell(x, hiddens)
+
                     compare_quantized_unquantized(ScriptWrapper, cell)
 
-    if 'fbgemm' in torch.backends.quantized.supported_engines:
+    if "fbgemm" in torch.backends.quantized.supported_engines:
         # Suppression: using deprecated quant api
         @suppress_warnings
         def test_quantization_modules(self):
@@ -2167,8 +2564,12 @@ class TestDeprecatedJitQuantized(JitTestCase):
 
             fb = FooBar()
             fb.linear1.weight = torch.nn.Parameter(
-                torch.tensor([[-150, 100], [100, -150]], dtype=torch.float), requires_grad=False)
-            fb.linear1.bias = torch.nn.Parameter(torch.zeros_like(fb.linear1.bias), requires_grad=False)
+                torch.tensor([[-150, 100], [100, -150]], dtype=torch.float),
+                requires_grad=False,
+            )
+            fb.linear1.bias = torch.nn.Parameter(
+                torch.zeros_like(fb.linear1.bias), requires_grad=False
+            )
 
             x = (torch.rand(1, K1).float() - 0.5) / 10.0
             value = torch.tensor([[100, -150]], dtype=torch.float)
@@ -2190,8 +2591,9 @@ class TestDeprecatedJitQuantized(JitTestCase):
 
     def _test_pickle_checkpoint_qtensor(self, device):
         with TemporaryFileName() as fname:
+
             class M(torch.jit.ScriptModule):
-                __constants__ = ['fname']
+                __constants__ = ["fname"]
 
                 def __init__(self):
                     super(M, self).__init__()
@@ -2203,12 +2605,18 @@ class TestDeprecatedJitQuantized(JitTestCase):
                     return y
 
             q = torch.quantize_per_tensor(
-                torch.rand(2, 3, dtype=torch.float), scale=0.1, zero_point=10, dtype=torch.quint8).to(device)
+                torch.rand(2, 3, dtype=torch.float),
+                scale=0.1,
+                zero_point=10,
+                dtype=torch.quint8,
+            ).to(device)
             qc = torch.quantize_per_channel(
                 torch.rand(2, 3, dtype=torch.float),
                 scales=torch.tensor([0.1, 0.5, 0.01]),
                 zero_points=torch.tensor([10, 0, 20]),
-                axis=1, dtype=torch.quint8).to(device)
+                axis=1,
+                dtype=torch.quint8,
+            ).to(device)
             m = M()
             m(q, qc)
             with open(fname, "rb") as handle:
@@ -2217,7 +2625,7 @@ class TestDeprecatedJitQuantized(JitTestCase):
                 self.assertEqual(loaded_qc, qc)
 
     def test_pickle_checkpoint_qtensor(self):
-        self._test_pickle_checkpoint_qtensor('cpu')
+        self._test_pickle_checkpoint_qtensor("cpu")
 
     def test_serialize_qtensor(self):
         class SimpleQTensor(torch.jit.ScriptModule):
@@ -2230,7 +2638,7 @@ class TestDeprecatedJitQuantized(JitTestCase):
                     s = torch.rand(5, dtype=torch.float64) + 0.1
                     zp = torch.randint(5, 15, (5,))
                     x_q = torch.quantize_per_channel(x, s, zp, 1, torch.quint8)
-                self.register_buffer('x', x_q)
+                self.register_buffer("x", x_q)
 
             @torch.jit.script_method
             def forward(self):
@@ -2250,13 +2658,19 @@ class TestDeprecatedJitQuantized(JitTestCase):
             def __init__(self, in_features, out_features):
                 super(Linear, self).__init__()
                 qweight = torch._empty_affine_quantized(
-                    [out_features, in_features], scale=1, zero_point=0,
-                    dtype=torch.qint8)
+                    [out_features, in_features],
+                    scale=1,
+                    zero_point=0,
+                    dtype=torch.qint8,
+                )
                 self._packed_weight = torch.ops.quantized.linear_prepack(qweight)
 
             @torch.jit.export
             def __getstate__(self):
-                return (torch.ops.quantized.linear_unpack(self._packed_weight)[0], self.training)
+                return (
+                    torch.ops.quantized.linear_unpack(self._packed_weight)[0],
+                    self.training,
+                )
 
             def forward(self):
                 return self._packed_weight
@@ -2278,7 +2692,10 @@ class TestDeprecatedJitQuantized(JitTestCase):
             x = torch.jit.script(Linear(10, 10))
             torch._C._jit_pass_erase_shape_information(x.graph)
 
-if __name__ == '__main__':
-    raise RuntimeError("This test file is not meant to be run directly, use:\n\n"
-                       "\tpython test/test_quantization.py TESTNAME\n\n"
-                       "instead.")
+
+if __name__ == "__main__":
+    raise RuntimeError(
+        "This test file is not meant to be run directly, use:\n\n"
+        "\tpython test/test_quantization.py TESTNAME\n\n"
+        "instead."
+    )
