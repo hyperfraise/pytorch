@@ -245,24 +245,34 @@ class Cat(QuantizeHandler):
 @register_quant_pattern(torch.nn.Conv2d)
 @register_quant_pattern(torch.nn.Conv3d)
 @register_quant_pattern(torch.nn.functional.conv2d)
+@register_quant_pattern(torch.nn.functional.conv3d)
 @register_quant_pattern(torch.nn.qat.Conv2d)
+@register_quant_pattern(torch.nn.qat.Conv3d)
 @register_quant_pattern(torch.nn.intrinsic.ConvReLU1d)
 @register_quant_pattern(torch.nn.intrinsic.ConvReLU2d)
 @register_quant_pattern(torch.nn.intrinsic.ConvReLU3d)
 @register_quant_pattern(torch.nn.intrinsic.qat.ConvBn1d)
 @register_quant_pattern(torch.nn.intrinsic.qat.ConvBn2d)
+@register_quant_pattern(torch.nn.intrinsic.qat.ConvBn3d)
 @register_quant_pattern(torch.nn.intrinsic.qat.ConvBnReLU1d)
 @register_quant_pattern(torch.nn.intrinsic.qat.ConvBnReLU2d)
+@register_quant_pattern(torch.nn.intrinsic.qat.ConvBnReLU3d)
 @register_quant_pattern(torch.nn.intrinsic.qat.ConvReLU2d)
+@register_quant_pattern(torch.nn.intrinsic.qat.ConvReLU3d)
 @register_quant_pattern((torch.nn.functional.relu, torch.nn.functional.conv2d))
+@register_quant_pattern((torch.nn.functional.relu, torch.nn.functional.conv3d))
 @register_quant_pattern((torch.nn.ReLU, torch.nn.functional.conv2d))
+@register_quant_pattern((torch.nn.ReLU, torch.nn.functional.conv3d))
 # just for error checks
 @register_quant_pattern((torch.nn.ReLU, torch.nn.Conv2d))
+@register_quant_pattern((torch.nn.ReLU, torch.nn.Conv3d))
 @register_quant_pattern((torch.nn.functional.relu, torch.nn.Conv2d))
+@register_quant_pattern((torch.nn.functional.relu, torch.nn.Conv3d))
 class ConvRelu(QuantizeHandler):
     def __init__(self, quantizer: QuantizerCls, node: Node):
         super().__init__(quantizer, node)
         self.relu_node = None
+        self.node_target = node.target
         if (node.op == "call_function" and node.target is torch.nn.functional.relu) or (
             node.op == "call_module"
             and isinstance(quantizer.modules[node.target], torch.nn.ReLU)
@@ -312,12 +322,13 @@ class ConvRelu(QuantizeHandler):
             setattr(quantizer.modules[parent_name], name, quantized)
             return quantizer.quantized_graph.create_node(
                 "call_module",
-                self.conv_node.target,
+                self.node_target,
                 (load_arg(quantized=True)(self.conv_node.args[0]),),
                 {},
             )
         else:  # call_function
             assert self.conv_node.op == "call_function"
+
             if self.relu_node is not None:
                 raise Exception("functional conv + relu is not supported yet")
             if debug:
@@ -325,7 +336,7 @@ class ConvRelu(QuantizeHandler):
                 args = load_arg(quantized=False)(self.conv_node.args)
                 kwargs = load_arg(quantized=False)(self.conv_node.kwargs)
                 conv_out = quantizer.quantized_graph.create_node(
-                    "call_function", torch.nn.functional.conv2d, args, kwargs
+                    "call_function", self.node_target, args, kwargs
                 )
                 root_module = quantizer.modules[""]
                 return quantize_node(
@@ -337,15 +348,26 @@ class ConvRelu(QuantizeHandler):
             else:
                 assert (
                     len(self.conv_node.args) == 7
-                ), "only conv2d calls with all arguments specified is support right now in debug=False option"
+                ), "only conv2d or conv3d calls with all arguments specified is support right now in debug=False option"
                 args = load_arg(quantized=[0, 1])(self.conv_node.args)
                 # pack weight
                 weight = load_arg(quantized=True)(self.conv_node.args[1])
                 other_args = load_arg(quantized=False)(self.conv_node.args[2:])
                 prepack_args = tuple([weight] + list(other_args))
+
+                assert self.node_target in [
+                    torch.nn.functional.conv2d,
+                    torch.nn.functional.conv3d,
+                ], "Only conv2d and conv3d are supported"
+                prepack_corresponding_module = (
+                    torch.ops.quantized.conv3d_prepack
+                    if torch.nn.functional.conv3d == self.node_target
+                    else torch.ops.quantized.conv2d_prepack
+                )
+
                 packed_weight = quantizer.quantized_graph.create_node(
                     "call_function",
-                    torch.ops.quantized.conv2d_prepack,
+                    prepack_corresponding_module,
                     prepack_args,
                     {},
                 )
@@ -357,8 +379,18 @@ class ConvRelu(QuantizeHandler):
                 scale, zero_point, _ = get_per_tensor_qparams(activation_post_process)
                 qconv_args = (conv_input, packed_weight, scale, zero_point)
                 kwargs = load_arg(quantized=False)(self.conv_node.kwargs)
+
+                quantized_corresponding_module = (
+                    torch.ops.quantized.conv3d
+                    if torch.nn.functional.conv3d == self.node_target
+                    else torch.ops.quantized.conv2d
+                )
+
                 return quantizer.quantized_graph.create_node(
-                    "call_function", torch.ops.quantized.conv2d, qconv_args, kwargs
+                    "call_function",
+                    quantized_corresponding_module,
+                    qconv_args,
+                    kwargs,
                 )
 
 
