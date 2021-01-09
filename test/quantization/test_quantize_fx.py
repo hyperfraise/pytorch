@@ -239,7 +239,7 @@ class TestQuantizeFx(QuantizationTestCase):
         inputs, quantized_node, weight_prepack_op
         """
 
-        class Conv(torch.nn.Module):
+        class Conv2d(torch.nn.Module):
             def __init__(self, weight):
                 super().__init__()
                 self.weight = torch.nn.Parameter(weight)
@@ -259,8 +259,31 @@ class TestQuantizeFx(QuantizationTestCase):
                     self.groups,
                 )
 
-        conv_input = torch.rand(1, 3, 224, 224)
-        conv_weight = torch.rand(3, 3, 3, 3)
+        conv2d_input = torch.rand(1, 3, 224, 224)
+        conv2d_weight = torch.rand(3, 3, 3, 3)
+
+        class Conv3d(torch.nn.Module):
+            def __init__(self, weight):
+                super().__init__()
+                self.weight = torch.nn.Parameter(weight)
+                self.stride = (1, 1, 1)
+                self.padding = (0, 0, 0)
+                self.dilation = (1, 1, 1)
+                self.groups = 1
+
+            def forward(self, x):
+                return F.conv3d(
+                    x,
+                    self.weight,
+                    None,
+                    self.stride,
+                    self.padding,
+                    self.dilation,
+                    self.groups,
+                )
+
+        conv3d_input = torch.rand(1, 3, 32, 224, 224)
+        conv3d_weight = torch.rand(3, 3, 3, 3, 3)
 
         class Linear(torch.nn.Module):
             def __init__(self, weight):
@@ -286,11 +309,19 @@ class TestQuantizeFx(QuantizationTestCase):
         tests = [
             (
                 False,
-                Conv,
-                (conv_weight,),
-                (conv_input,),
+                Conv2d,
+                (conv2d_weight,),
+                (conv2d_input,),
                 ns.call_function(torch.ops.quantized.conv2d),
                 ns.call_function(torch.ops.quantized.conv2d_prepack),
+            ),
+            (
+                False,
+                Conv3d,
+                (conv3d_weight,),
+                (conv3d_input,),
+                ns.call_function(torch.ops.quantized.conv3d),
+                ns.call_function(torch.ops.quantized.conv3d_prepack),
             ),
             (
                 True,
@@ -445,7 +476,7 @@ class TestQuantizeFx(QuantizationTestCase):
                 x = self.dequant(x)
                 return x
 
-        options = itertools.product([1, 2], [True, False], self.static_quant_types)
+        options = itertools.product([1, 2, 3], [True, False], self.static_quant_types)
         for dim, has_relu, quant_type in options:
             expected_node = ns.call_module(
                 quantized_conv_relus[dim] if has_relu else quantized_convs[dim]
