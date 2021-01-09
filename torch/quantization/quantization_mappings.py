@@ -19,7 +19,7 @@ from .fake_quantize import (
 from .utils import get_combined_dict
 
 # Default map for swapping float module to quantized ones
-DEFAULT_STATIC_QUANT_MODULE_MAPPINGS : Dict[Callable, Any] = {
+DEFAULT_STATIC_QUANT_MODULE_MAPPINGS: Dict[Callable, Any] = {
     QuantStub: nnq.Quantize,
     DeQuantStub: nnq.DeQuantize,
     nn.BatchNorm2d: nnq.BatchNorm2d,
@@ -63,7 +63,7 @@ DEFAULT_STATIC_QUANT_MODULE_MAPPINGS : Dict[Callable, Any] = {
 }
 
 # Default map for swapping float module to qat modules
-DEFAULT_QAT_MODULE_MAPPINGS : Dict[Callable, Any] = {
+DEFAULT_QAT_MODULE_MAPPINGS: Dict[Callable, Any] = {
     nn.Conv2d: nnqat.Conv2d,
     nn.Linear: nnqat.Linear,
     nn.modules.linear._LinearWithBias: nnqat.Linear,
@@ -73,11 +73,11 @@ DEFAULT_QAT_MODULE_MAPPINGS : Dict[Callable, Any] = {
     nni.ConvBnReLU1d: nniqat.ConvBnReLU1d,
     nni.ConvBnReLU2d: nniqat.ConvBnReLU2d,
     nni.ConvReLU2d: nniqat.ConvReLU2d,
-    nni.LinearReLU: nniqat.LinearReLU
+    nni.LinearReLU: nniqat.LinearReLU,
 }
 
 # Default map for swapping dynamic modules
-DEFAULT_DYNAMIC_QUANT_MODULE_MAPPINGS : Dict[Callable, Any] = {
+DEFAULT_DYNAMIC_QUANT_MODULE_MAPPINGS: Dict[Callable, Any] = {
     nn.GRUCell: nnqd.GRUCell,
     nn.Linear: nnqd.Linear,
     nn.modules.linear._LinearWithBias: nnqd.Linear,
@@ -88,13 +88,13 @@ DEFAULT_DYNAMIC_QUANT_MODULE_MAPPINGS : Dict[Callable, Any] = {
 }
 
 # Whitelist for propagating the qconfig
-_INCLUDE_QCONFIG_PROPAGATE_LIST : Set[Callable] = {
+_INCLUDE_QCONFIG_PROPAGATE_LIST: Set[Callable] = {
     nn.Sequential,
 }
 
 # Default mapping from floating point function or torch ops to quantized ops
 # TODO: merge with default static mapping
-DEFAULT_FLOAT_TO_QUANTIZED_OPERATOR_MAPPINGS : Dict[Union[Callable, str], Callable] = {
+DEFAULT_FLOAT_TO_QUANTIZED_OPERATOR_MAPPINGS: Dict[Union[Callable, str], Callable] = {
     F.elu: torch._ops.ops.quantized.elu,
     F.hardswish: torch._ops.ops.quantized.hardswish,
     F.instance_norm: torch._ops.ops.quantized.instance_norm,
@@ -103,73 +103,85 @@ DEFAULT_FLOAT_TO_QUANTIZED_OPERATOR_MAPPINGS : Dict[Union[Callable, str], Callab
 }
 
 # mapping from module to output activation post process class
-DEFAULT_MODULE_TO_ACT_POST_PROCESS : Dict[Callable, Callable] = {
+DEFAULT_MODULE_TO_ACT_POST_PROCESS: Dict[Callable, Callable] = {
     nn.Hardsigmoid: default_affine_fixed_qparams_fake_quant,
     nn.Sigmoid: default_affine_fixed_qparams_fake_quant,
     nn.Tanh: default_symmetric_fixed_qparams_fake_quant,
 }
 
+
 def get_default_static_quant_module_mappings() -> Dict[Callable, Any]:
-    ''' Get module mapping for post training static quantization
-    '''
+    """Get module mapping for post training static quantization"""
     return DEFAULT_STATIC_QUANT_MODULE_MAPPINGS
 
+
 def get_static_quant_module_class(
-        float_module_class: Callable,
-        additional_static_quant_mapping: Optional[Dict[Callable, Any]] = None) -> Any:
+    float_module_class: Callable,
+    additional_static_quant_mapping: Optional[Dict[Callable, Any]] = None,
+) -> Any:
     r"""n Get the statically quantized module class corresponding to
     the floating point module class
     """
     if additional_static_quant_mapping is None:
         additional_static_quant_mapping = {}
-    all_mappings = get_combined_dict(DEFAULT_STATIC_QUANT_MODULE_MAPPINGS, additional_static_quant_mapping)
+    all_mappings = get_combined_dict(
+        DEFAULT_STATIC_QUANT_MODULE_MAPPINGS, additional_static_quant_mapping
+    )
     static_quant_module_class = all_mappings.get(float_module_class, None)
-    assert static_quant_module_class is not None, \
-        "Floating point module class {}".format(str(float_module_class)) + \
-        " does not have a corresponding quantized module class"
+    assert static_quant_module_class is not None, (
+        "Floating point module class {}".format(str(float_module_class))
+        + " does not have a corresponding quantized module class"
+    )
     return static_quant_module_class
 
+
 def get_dynamic_quant_module_class(
-        float_module_class: Callable,
-        additional_dynamic_quant_mapping: Optional[Dict[Callable, Any]] = None) -> Any:
+    float_module_class: Callable,
+    additional_dynamic_quant_mapping: Optional[Dict[Callable, Any]] = None,
+) -> Any:
     r"""n Get the dynamically quantized module class corresponding to
     the floating point module class
     """
     if additional_dynamic_quant_mapping is None:
         additional_dynamic_quant_mapping = {}
-    all_mappings = get_combined_dict(DEFAULT_DYNAMIC_QUANT_MODULE_MAPPINGS, additional_dynamic_quant_mapping)
+    all_mappings = get_combined_dict(
+        DEFAULT_DYNAMIC_QUANT_MODULE_MAPPINGS, additional_dynamic_quant_mapping
+    )
     dynamic_quant_module_class = all_mappings.get(float_module_class, None)
-    assert dynamic_quant_module_class is not None, \
-        "Floating point module class {}".format(str(float_module_class)) + \
-        " does not have a corresponding quantized module class"
+    assert dynamic_quant_module_class is not None, (
+        "Floating point module class {}".format(str(float_module_class))
+        + " does not have a corresponding quantized module class"
+    )
     return dynamic_quant_module_class
 
+
 def get_default_qat_module_mappings() -> Dict[Callable, Any]:
-    ''' Get default module mapping for quantization aware training
-    '''
+    """Get default module mapping for quantization aware training"""
     return DEFAULT_QAT_MODULE_MAPPINGS
 
+
 def get_default_dynamic_quant_module_mappings() -> Dict[Callable, Any]:
-    ''' Get module mapping for post training dynamic quantization
-    '''
+    """Get module mapping for post training dynamic quantization"""
     return DEFAULT_DYNAMIC_QUANT_MODULE_MAPPINGS
 
+
 def get_default_qconfig_propagation_list() -> Set[Callable]:
-    ''' Get the default list of module types that we'll attach qconfig
+    """Get the default list of module types that we'll attach qconfig
     attribute to in prepare
-    '''
+    """
     QCONFIG_PROPAGATE_MODULE_CLASS_LIST = (
-        (set(DEFAULT_STATIC_QUANT_MODULE_MAPPINGS.keys()) |
-         set(DEFAULT_QAT_MODULE_MAPPINGS.keys()) |
-         set(DEFAULT_DYNAMIC_QUANT_MODULE_MAPPINGS.keys()) |
-         _INCLUDE_QCONFIG_PROPAGATE_LIST)
+        set(DEFAULT_STATIC_QUANT_MODULE_MAPPINGS.keys())
+        | set(DEFAULT_QAT_MODULE_MAPPINGS.keys())
+        | set(DEFAULT_DYNAMIC_QUANT_MODULE_MAPPINGS.keys())
+        | _INCLUDE_QCONFIG_PROPAGATE_LIST
     )
     return QCONFIG_PROPAGATE_MODULE_CLASS_LIST
 
+
 def get_default_compare_output_module_list() -> Set[Callable]:
-    ''' Get list of module class types that we will record output
+    """Get list of module class types that we will record output
     in numeric suite
-    '''
+    """
     NUMERIC_SUITE_COMPARE_MODEL_OUTPUT_MODULE_LIST = (
         set(DEFAULT_STATIC_QUANT_MODULE_MAPPINGS.values())
         | set(DEFAULT_QAT_MODULE_MAPPINGS.values())
@@ -181,23 +193,26 @@ def get_default_compare_output_module_list() -> Set[Callable]:
     )
     return NUMERIC_SUITE_COMPARE_MODEL_OUTPUT_MODULE_LIST
 
+
 # TODO: merge with get_static_quant_module_class
 def get_quantized_operator(float_op: Union[Callable, str]) -> Callable:
-    ''' Get the quantized operator corresponding to the float operator
-    '''
+    """Get the quantized operator corresponding to the float operator"""
     quantized_op = DEFAULT_FLOAT_TO_QUANTIZED_OPERATOR_MAPPINGS.get(float_op, None)
-    assert quantized_op is not None, \
-        'Operator {} does not have corresponding quantized op'.format(str(float_op))
+    assert (
+        quantized_op is not None
+    ), "Operator {} does not have corresponding quantized op".format(str(float_op))
     return quantized_op
 
+
 def _get_special_act_post_process(module: torch.nn.Module) -> Optional[Callable]:
-    r""" Get the special activation post process for `module`, this has
+    r"""Get the special activation post process for `module`, this has
     higher priority than the activation post process in `qconfig`
     e.g.
     input: torch.nn.Sigmoid
     output: default_affine_fixed_qparam_fake_quant
     """
     return DEFAULT_MODULE_TO_ACT_POST_PROCESS.get(type(module), None)
+
 
 def _has_special_act_post_process(module: torch.nn.Module) -> bool:
     return module.training and type(module) in DEFAULT_MODULE_TO_ACT_POST_PROCESS
